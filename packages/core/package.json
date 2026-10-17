@@ -8,6 +8,7 @@
     "./db": "./src/db/index.ts",
     "./open-payments": "./src/open-payments/index.ts",
     "./score": "./src/score.ts",
+    "./lending": "./src/lending.ts",
     "./repayment": "./src/repayment.ts",
     "./amount": "./src/amount.ts"
   },

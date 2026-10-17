@@ -28,6 +28,32 @@ Evidence conventions — what makes an entry verifiable instead of a claim:
 
 ### Added
 
+- Flow 4.1, the lender's quota: `POST /api/lenders` asks the lender's wallet
+  for an outgoing-payment grant capped at the quota (`limits.debitAmount`),
+  the callback verifies the provider's `hash` and activates it, and
+  `GET /api/lenders` shows quota, available and committed. The Lending page
+  runs it; `?state=` keeps the example states.
+- Flow 4.3, the loan: `POST /api/loans` re-applies the offer's cap on the
+  server with the quotas available now, reserves the quota in the same
+  transaction that creates the loan (`packages/core/lending.ts`, pinned by
+  `lending.test.ts`), and asks the borrower's wallet for the repayment grant
+  capped at `total_due`. The callback continues the grant and disburses after
+  responding: incoming payment on the borrower, quote from the lender (its
+  `debitAmount` above the principal is reserved too, or the loan fails) and
+  the outgoing payment with the lender's token, rotated once through
+  `manage_url` if the provider rejects it (`withFreshToken`, pinned by
+  `tokens.test.ts`; payments pinned by `payments.test.ts`). The widget shows
+  the loan waiting, arriving, received and paid. Evidence on the test
+  network pending the client credentials; see `07` Fase 3.
+
+### Changed
+
+- `apps/cron` is now only the repayment service loop: the Express playground
+  and its `/payments` routes are gone (their logic lives in
+  `packages/core/open-payments/payments.ts`). It runs with `tsx` on the root
+  `.env`, reads the shared store every `CRON_INTERVAL_MS` and never
+  overlaps cycles; phase 4 adds the repayment itself.
+
 - `packages/core`, the logic the web and the repayment service share, with
   Vitest and a coverage floor of 85 % enforced by the test command. The JSON
   store (`db/`): one document validated by a `zod` schema, every write
