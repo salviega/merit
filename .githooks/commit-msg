@@ -1,0 +1,47 @@
+#!/bin/sh
+# Enforces the Conventional Commits rules from AGENTS.md's "Commits" section.
+# POSIX sh + grep/sed only — no language runtime, so it works no matter what
+# stack the project ends up using. Enable it with:
+#   git config core.hooksPath .githooks
+
+commit_msg_file="$1"
+header=$(head -n1 "$commit_msg_file")
+
+types="feat|fix|docs|refactor|perf|test|build|ci|chore"
+pattern="^(${types})(\([a-z0-9./-]+\))?!?: .+"
+
+fail() {
+  echo "commit-msg: $1" >&2
+  echo "  Got: $header" >&2
+  exit 1
+}
+
+if ! printf '%s\n' "$header" | grep -Eq "$pattern"; then
+  fail "header must match '<type>(<scope>): <description>'. Types: feat, fix, docs, refactor, perf, test, build, ci, chore."
+fi
+
+header_len=$(printf '%s' "$header" | wc -m)
+if [ "$header_len" -gt 72 ]; then
+  fail "header is $header_len chars, max is 72."
+fi
+
+description=$(printf '%s\n' "$header" | sed -E "s/^(${types})(\([a-z0-9./-]+\))?!?: //")
+
+case "$description" in
+  *.) fail "description must not end in a period." ;;
+esac
+
+first_char=$(printf '%s' "$description" | cut -c1)
+case "$first_char" in
+  [A-Z]) fail "description must start lowercase (imperative mood)." ;;
+esac
+
+case "$header" in
+  *!:*)
+    if ! grep -Eq '^BREAKING CHANGE: .+' "$commit_msg_file"; then
+      fail "'!' marks a breaking change but no 'BREAKING CHANGE: <what breaks>' footer was found."
+    fi
+    ;;
+esac
+
+exit 0
