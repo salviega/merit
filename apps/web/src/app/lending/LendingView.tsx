@@ -12,6 +12,7 @@ import { Status } from "@/components/Status";
 import { WalletAddress } from "@/components/WalletAddress";
 import { exampleLender, examplePayments } from "@/lib/examples";
 import { formatAmount } from "@/lib/format";
+import { LiveLending } from "./LiveLending";
 
 // Screen states (04 §5, 04 §6 "Estados del cupo"):
 //   form        → wallet address + quota, the authorization card, one button
@@ -27,8 +28,8 @@ const labels = {
 };
 
 export function LendingView() {
-  // The real quota flow arrives with phase 3; until then the form is the default.
-  const state = useExampleState(states) ?? "form";
+  // Without `?state=` the page runs the real flow against /api/lenders.
+  const state = useExampleState(states);
   return (
     <>
       <header className="flex flex-col gap-3">
@@ -42,6 +43,7 @@ export function LendingView() {
         </p>
       </header>
 
+      {state === undefined && <LiveLending />}
       {state === "form" && <LendingForm />}
       {state === "authorizing" && <Authorizing />}
       {state === "active" && <ActiveQuota />}

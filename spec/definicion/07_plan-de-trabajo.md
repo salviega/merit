@@ -276,36 +276,56 @@ contra un callback real.
 oferta reciba el dinero en su billetera (flujos 4.1 y 4.3), con el dinero
 yendo directo del uno al otro.
 
-- `POST /api/lenders`: grant de `outgoing-payment` con `create, read` y
-  `limits.debitAmount = cupo` sobre la billetera del prestamista, con
-  `interact.finish` y `nonce`; fila `lender_grants` en `pendiente`.
-  Callback `lender`: verifica `hash`, continúa, guarda `access_token` y
-  `manage_url`, pasa a `activo`. La pantalla "Cupo activo" lee la fila.
-- `POST /api/loans`: valida la cookie y la oferta vigente, recalcula el
-  máximo en el servidor (05 §7), reserva `committed_amount` del cupo activo
-  más grande en la misma moneda **en la misma transacción** que crea el
-  préstamo (`pendiente_grant`), pide el grant de cobro sobre la billetera
+- ~~`POST /api/lenders` + `lending-flow.ts`: grant de `outgoing-payment` con
+  `create, read` y `limits.debitAmount = cupo` sobre la billetera del
+  prestamista (`quotaGrantRequest`, con test), `interact.finish` y `nonce`;
+  fila `lender_grants` en `pending`. Callback `lender`: verifica `hash`,
+  continúa, guarda `access_token` y `manage_url`, pasa a `active`. `GET
+  /api/lenders` da cupo, disponible y comprometido (nunca el token); la
+  página de Lending corre el flujo real y `?state=` sigue mostrando los
+  estados de ejemplo.~~
+- ~~`POST /api/loans` + `loan-flow.ts`: cookie + oferta vigente, recalcula el
+  máximo en el servidor con el cupo disponible ahora (05 §7), reserva
+  `committed_amount` del cupo activo más grande en la misma moneda **en la
+  misma transacción** que crea el préstamo (`reserveQuota`, con tests:
+  elige el mayor, rechaza si ninguno alcanza, marca `exhausted`, nunca sobre
+  un cupo `pending` o `revoked`), y pide el grant de cobro sobre la billetera
   del solicitante (`outgoing-payment: create, read` con `limits.debitAmount
-  = total_due` + `incoming-payment: list-all, read-all`) y redirige.
-- Callback `loan`: continúa el grant → `borrower_grants`; `desembolsando`;
-  crea el pago entrante en la billetera del solicitante, cotiza desde la del
-  prestamista, reserva con el `debitAmount` de la cotización (05 §10) y
-  crea el pago saliente con el token del prestamista. Guarda
-  `disbursement_incoming_payment` y `disbursed_at`; `activo`. Si algo falla:
-  `fallido` y la reserva se libera.
-- Rotación de tokens (`open-payments/tokens.ts`): antes de usar un token,
-  si venció, `POST` a `manage_url` y guardar el nuevo; si el proveedor lo
-  rechaza, el cupo pasa a `revocado`.
-- Un solicitante con un préstamo `activo` no puede tomar otro (04 §6).
-- Se borran las rutas de pago del Express de `apps/cron` (05 §11): su único
-  trabajo pasa a ser el ciclo de la fase 4.
+  = total_due` + `incoming-payment: list-all, read-all`). Si el grant falla,
+  el préstamo queda `failed` y la reserva se libera.~~
+- ~~Callback `loan`: verifica `hash`, continúa el grant → `borrower_grants`;
+  `disbursing`; responde y desembolsa después (`after()`): pago entrante en
+  la billetera del solicitante, cotización desde la del prestamista,
+  **reserva también la diferencia si el `debitAmount` de la cotización
+  supera el principal** (05 §10) o falla, y pago saliente con el token del
+  prestamista (`payQuote`). Guarda `disbursement_incoming_payment`,
+  `disbursement_outgoing_payment` y `disbursed_at`; `active`. Si algo falla:
+  `failed`, reserva liberada, y si el proveedor rechazó el token, el cupo
+  pasa a `revoked`.~~
+- ~~Rotación de tokens: `withFreshToken()` usa el token, y si el proveedor
+  responde 401/403 rota una vez por `manage_url` y reintenta; el token nuevo
+  se guarda. Tests: acepta, rota y reintenta, no rota ante otros errores,
+  propaga una rotación rechazada.~~
+- ~~Un solicitante con un préstamo `pending_grant`, `disbursing` o `active`
+  no puede tomar otro (04 §6).~~
+- ~~El widget muestra el préstamo: esperando autorización, enviando el
+  dinero, recibido (total, pagado, falta) y pagado; un préstamo fallido
+  vuelve a la oferta con el aviso.~~
+- ~~`apps/cron` sin Express (05 §11): solo el ciclo cada `CRON_INTERVAL_MS`
+  sin solapamiento, que hoy lee el almacén y cuenta los préstamos activos;
+  la fase 4 le pone el cobro. Corre con `tsx` sobre el `.env` de la raíz.~~
 
-**Verificación:** en la red de prueba, la billetera A autoriza un cupo, la
-billetera B toma un préstamo dentro de su oferta y su saldo sube en el
-monto exacto mientras el de A baja por el `debitAmount` de la cotización;
-`committed_amount` de A refleja el préstamo; "Cupo activo" muestra el
-disponible nuevo. Prueba manual del 05 §5: un pago saliente por encima del
-tope del grant es rechazado por el proveedor.
+**Verificación:** ~~`pnpm test` (63 tests, 97 % líneas / 89 % ramas),
+`pnpm typecheck`, `pnpm lint` y `pnpm build` limpios; con `next start` y
+`curl`, `GET /api/lenders` y `GET /api/loans` sin cookie responden `none`,
+`POST /api/loans` sin cookie responde 401, y `POST /api/lenders` con cuerpo
+inválido responde 400 (2026-10-16).~~ **Pendiente, necesita el `.env` y las
+billeteras de prueba:** la billetera A autoriza un cupo, la billetera B toma
+un préstamo dentro de su oferta y su saldo sube en el monto exacto mientras
+el de A baja por el `debitAmount` de la cotización; `committed_amount` de A
+refleja el préstamo; "Cupo activo" muestra el disponible nuevo. Prueba
+manual del 05 §5: un pago saliente por encima del tope del grant es
+rechazado por el proveedor.
 
 ---
 

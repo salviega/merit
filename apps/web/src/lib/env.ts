@@ -18,8 +18,8 @@ export type ServerEnv = z.infer<typeof schema> & { dataFilePath: string };
 
 let cached: ServerEnv | undefined;
 
-/** The repo root: `apps/web` runs with its own cwd. */
-const repoRoot = path.resolve(process.cwd(), "../..");
+/** The repo root: `apps/web` runs with its own cwd. Resolved at runtime, not traced by the bundler. */
+const repoRoot = path.resolve(/* turbopackIgnore: true */ process.cwd(), "../..");
 
 export function serverEnv(): ServerEnv {
   if (cached) return cached;

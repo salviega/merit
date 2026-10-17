@@ -1,14 +1,22 @@
+import path from "node:path";
 import { z } from "zod";
 
 // The env comes from the monorepo's root .env (see the `dev`/`start` scripts
-// and .env.example at the repo root).
+// and .env.example at the repo root). A key left blank counts as unset.
+const blankAsUndefined = (value: unknown) =>
+  typeof value === "string" && value.trim() === "" ? undefined : value;
+
 const schema = z.object({
-  PORT: z.coerce.number().default(4000),
-  WEB_ORIGIN: z.string().url().default("http://localhost:3000"),
-  OPEN_PAYMENTS_WALLET_ADDRESS: z.string().url().optional(),
-  OPEN_PAYMENTS_KEY_ID: z.string().optional(),
-  // The private key PEM, base64-encoded in one line. Replaces the key file.
-  OPEN_PAYMENTS_PRIVATE_KEY: z.string().optional(),
+  DATA_FILE: z.preprocess(blankAsUndefined, z.string().min(1).default("./data/merit.json")),
+  CRON_INTERVAL_MS: z.preprocess(blankAsUndefined, z.coerce.number().int().min(1000).default(5000)),
 });
 
-export const config = schema.parse(process.env);
+const parsed = schema.parse(process.env);
+
+/** The repo root: apps/cron runs with its own cwd. */
+const repoRoot = path.resolve(process.cwd(), "../..");
+
+export const config = {
+  ...parsed,
+  dataFilePath: path.isAbsolute(parsed.DATA_FILE) ? parsed.DATA_FILE : path.resolve(repoRoot, parsed.DATA_FILE),
+};

@@ -258,7 +258,7 @@ el grant.
 
 - Dónde corren `apps/web` y `apps/cron` después del hackathon (Railway, Fly,
   una VM), y pasar el almacén a Postgres cuando dejen de compartir disco.
-- Mover los endpoints de `apps/cron` (Express) a `apps/web` y dejar
-  `apps/cron` solo con el ciclo de cobro.
+- ~~Mover los endpoints de `apps/cron` (Express) a `apps/web` y dejar
+  `apps/cron` solo con el ciclo de cobro.~~ Hecho en la fase 3 del 07.
 - Confirmar en la red de prueba qué grants piden interacción y qué duración
   tienen sus tokens.

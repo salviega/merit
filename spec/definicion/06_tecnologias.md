@@ -63,7 +63,7 @@ son tres campos en total.
 | Vitest | 5.0.5 | Pruebas de `packages/core`: score, oferta, cuotas, el almacén (incluida concurrencia entre dos procesos) y el ciclo de cobro contra un archivo temporal. |
 | `@vitest/coverage-v8` | 5.0.5 | Cobertura de `packages/core`; el umbral se declara en la config de Vitest, así `pnpm test` falla debajo del piso. |
 | ESLint | 9 (`eslint-config-next`) | Lint de `apps/web`. |
-| `tsx` | 4.23.15 | Corre `apps/cron` en desarrollo con recarga y los scripts de la raíz (`seed:history`). |
+| `tsx` | 4.23.15 | Corre `apps/cron` (también en `start`: importa `packages/core` como TypeScript) y los scripts de la raíz (`seed:history`). |
 | GitHub Actions | — | CI en cada pull request: lint, typecheck y build (y `test` cuando exista). |
 
 ---
@@ -115,7 +115,7 @@ son tres campos en total.
 
 | Descartado | En favor de | Por qué |
 | ---------- | ----------- | ------- |
-| Express en `apps/cron` como API | Route handlers de Next.js | Los callbacks necesitan una URL pública; la web ya la tiene en Vercel. |
+| Express en `apps/cron` como API | Route handlers de Next.js | Los callbacks viven con las páginas, tras el túnel; `apps/cron` quedó solo con el ciclo de cobro (fase 3 del 07). |
 | Vercel Cron | Proceso Node con ciclo de 5 s | Vercel Cron no baja de un minuto. |
 | Prisma, Drizzle | Almacén JSON propio | Sin ORM que mantener; el esquema es un `zod` del documento completo. |
 | Postgres (Neon), SQLite | Archivo JSON con lock | La API y el cobro corren en la misma máquina durante el hackathon; un lock de archivo y escritura atómica bastan para la exclusión mutua, sin servicio que mantener. Postgres vuelve cuando dejen de compartir disco (08). |
