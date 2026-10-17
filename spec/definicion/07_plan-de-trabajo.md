@@ -9,10 +9,12 @@
 
 ## Marco
 
-- **Dónde vive:** un solo monorepo pnpm, `merit/`, con `apps/web` (Next.js,
-  en Vercel), `apps/cron` (hoy un Express de pruebas; termina siendo el
+- **Dónde vive:** un solo monorepo pnpm, `merit/`, con `apps/web` (Next.js;
+  la landing en Vercel y la app completa en la máquina de la demo tras un
+  túnel ngrok), `apps/cron` (hoy un Express de pruebas; termina siendo el
   servicio de cobro) y `packages/core` (todavía no existe; lo crea la fase
-  2). `apps/api/fetch_wallet.js/` es un **PoC** de lectura de historial que
+  2). El estado vive en `data/merit.json`, un archivo JSON con lock entre
+  procesos (05 §1). `apps/api/fetch_wallet.js/` es un **PoC** de lectura de historial que
   se absorbe en `packages/core` y se borra en la fase 2.
 - **Punto de partida (2026-10-16):** repo con CI en pull requests, hook de
   Conventional Commits, documentos 01–06 escritos, un playground de pago
@@ -95,8 +97,10 @@ que dependa de él.
   - Si no los devuelve (solo lo que Merit creó, o el grant se rechaza): se
     activa el plan B del 05 §10 el mismo día y se corrige el 04 §4.2, el
     05 §6 y este documento antes de la fase 2.
-- Variables de entorno acordadas en el 06 §8 definidas en `.env.example`
-  de cada app; `OPEN_PAYMENTS_PRIVATE_KEY` reemplaza al archivo.
+- Variables de entorno acordadas en el 06 §8 en un `.env.example` en la
+  raíz, y un `.env` (ignorado) con todas las claves vacías para llenar;
+  `OPEN_PAYMENTS_PRIVATE_KEY` reemplaza al archivo. Script `tunnel` para
+  ngrok.
 - `AGENTS.md`: reemplazar los `[ADAPT]` por los comandos reales (`pnpm
   test`, `pnpm typecheck`, `pnpm lint`) y nombrar como test crítico
   "repayment never exceeds total_due and never charges an incoming payment
@@ -233,11 +237,14 @@ completo), con el cálculo probado sin red.
 - Crear `packages/core` (TypeScript unificado) con `db/`, `open-payments/`,
   `score.ts` y `repayment.ts` vacío, más Vitest con `@vitest/coverage-v8` y
   el umbral en la config, de modo que `pnpm test` falle debajo de él.
-- Neon Postgres desde el Marketplace de Vercel; esquema Drizzle de las seis
-  tablas del 04 §3 (`lender_grants`, `score_requests`, `loans`,
-  `borrower_grants`, `observed_incoming_payments`, `repayments`), con
-  `UNIQUE (loan_id, incoming_payment_id)` desde la primera migración.
-  Scripts `db:generate` y `db:migrate`.
+- Almacén JSON en `db/`: esquema `zod` del documento con las seis
+  colecciones del 04 §3 (`lender_grants`, `score_requests`, `loans`,
+  `borrower_grants`, `observed_incoming_payments`, `repayments`) y
+  `withTransaction()` sobre `proper-lockfile` + `write-file-atomic`, que
+  rechaza duplicar `(loan_id, incoming_payment_id)`. Tests primero: una
+  escritura interrumpida no deja el archivo a medias; dos transacciones
+  desde dos procesos reales no pierden ninguna escritura; el duplicado
+  falla.
 - `open-payments/client.ts`: cliente autenticado único para las dos apps,
   llave desde `OPEN_PAYMENTS_PRIVATE_KEY`.
 
@@ -252,7 +259,7 @@ y se corrige lo que lo hacía un prototipo:
 | `listAll(resource)`: paginación con `first: 100` y `cursor` hasta `hasNextPage = false` | `open-payments/history.ts` → `listHistory(wallet, token, { since })` | Se corta al llegar a pagos con `createdAt` anterior a `since` (90 días, 05 §6) en vez de leer todo; devuelve `{ incoming, outgoing }` tipados y validados con `zod`. |
 | Columnas del CSV: `receivedAmount` para entrantes, `sentAmount` para salientes, `completed`, `failed` | Entradas del score | El score usa `receivedAmount` de los entrantes **completados** y `debitAmount` de los salientes **no fallidos** (05 §6), ignorando `sentAmount`. |
 | `/revoke`: `token.revoke` con `manage_url` | `open-payments/tokens.ts` | Se usa para revocar el token de historial una vez calculado el score: Merit no guarda acceso de lectura que ya no necesita. |
-| Express, `dotenv`, `private.key`, estado en memoria | Se eliminan | Route handlers de Next.js, variables de entorno del 06 §8, Postgres. La carpeta `apps/api/` se borra en el commit que cierre esta parte. |
+| Express, `dotenv`, `private.key`, estado en memoria | Se eliminan | Route handlers de Next.js, variables de entorno del 06 §8, el almacén JSON. La carpeta `apps/api/` se borra en el commit que cierre esta parte. |
 
 **Score y oferta (test primero):**
 
@@ -278,8 +285,9 @@ y se corrige lo que lo hacía un prototipo:
 una billetera de prueba sembrada con `seed:history` entra a `/borrowing`,
 aprueba el grant en `wallet.interledger-test.dev`, vuelve, ve "Analizando…"
 y luego un score ≥ 500 con monto máximo, tasa e interés; una billetera sin
-historial ve "rechazado". En Neon, la `score_request` quedó `aprobado` y
-el token de historial fue revocado (un segundo `listHistory` con él falla).
+historial ve "rechazado". En `data/merit.json`, la `score_request` quedó
+`aprobado` y el token de historial fue revocado (un segundo `listHistory`
+con él falla).
 
 ---
 
@@ -337,13 +345,14 @@ corriendo cada 5 segundos (flujo 4.4). Es la fase que sostiene la regla 1.
   - Pagos anteriores a `disbursed_at` → ninguna cuota.
   - La cuota que superaría `total_due` se recorta al saldo exacto y el
     préstamo pasa a `pagado`.
-  - Dos ciclos concurrentes sobre el mismo préstamo → las mismas cuotas
-    que uno solo (test contra una base de prueba con `FOR UPDATE`).
+  - Dos ciclos concurrentes sobre el mismo préstamo, desde dos procesos
+    reales → las mismas cuotas que uno solo (test sobre un archivo temporal
+    con `withTransaction()`).
 - Ciclo en `apps/cron`: cada `CRON_INTERVAL_MS` sin solapamiento; por cada
   préstamo `activo`, lista los pagos entrantes del solicitante con el
   token de `borrower_grants`, paginando solo hasta `disbursed_at`
   (reutiliza `listHistory` con `since`), y por cada ingreso nuevo abre
-  **una transacción**: `SELECT … FOR UPDATE` del préstamo, lee
+  **una transacción** (`withTransaction()`, bajo el lock del archivo): lee
   `processed_amount`, calcula, adelanta `processed_amount`, inserta la
   cuota `pendiente`; fuera de la transacción crea el pago entrante en la
   billetera del prestamista, cotiza desde la del solicitante y crea el pago
@@ -369,8 +378,9 @@ Reiniciar el servicio a mitad de camino no produce cuotas repetidas.
 nadie se lo explique.
 
 - Reemplazar `README.md` por el contenido de `PROJECT_README.template.md`:
-  qué es, cómo correrlo, variables, cómo probar con billeteras de prueba,
-  arquitectura (el diagrama del 05 §2) y el enlace al despliegue.
+  qué es, cómo correrlo (`.env`, `tunnel`, `dev`, `seed:history`),
+  variables, cómo probar con billeteras de prueba, arquitectura (el
+  diagrama del 05 §2) y los enlaces a la landing en Vercel y a la app.
 - Datos de demo: billeteras A (prestamista), B (solicitante con historial
   sembrado) y C (quien le paga a B), con un guion de 3 minutos escrito en
   `spec/demo.md` y ensayado dos veces.
@@ -381,7 +391,8 @@ nadie se lo explique.
   SDK durante las fases 0–4.
 - Versión al mergear a `main`, según la cadencia del `CHANGELOG.md`: minor,
   porque cierra una fase del plan.
-- `08_roadmap.md` con lo del 04 §7 y lo que se recortó.
+- `08_roadmap.md` con lo del 04 §7, lo que se recortó y el paso a Postgres
+  y a un hosting propio cuando la API y el cobro dejen de compartir disco.
 
 **Verificación:** una persona ajena al equipo sigue el README en una
 máquina limpia y completa el guion de la demo sin preguntar nada; el
@@ -430,3 +441,5 @@ Se corta desde atrás, en este orden:
 | El listado de pagos entrantes crece y el ciclo de 5 s toca límites de tasa | 2026-10-26, con el servicio corriendo horas | Paginar solo hasta `disbursed_at` y guardar el último cursor visto por préstamo. |
 | Lighthouse no llega a SEO 100 por algo del hosting (headers, redirecciones) | 2026-10-19, en el preview del PR de la fase 1 | Se corrige en `next.config.ts` o en Vercel; si no es corregible, se documenta la causa en el CHANGELOG con la captura. |
 | Dos personas tocando `packages/core` a la vez | Durante la fase 2 | Una persona en `score.ts`/API, la otra en `db/` y `open-payments/`; se mergea por PR pequeños cada día. |
+| La demo depende de la laptop encendida y de ngrok | En cada ensayo de la fase 5 | Ensayar con el túnel levantado desde cero; la landing en Vercel sigue viva aunque la app no. |
+| Dos procesos escriben `data/merit.json` a la vez | 2026-10-21, test de dos procesos del almacén | Si el lock falla en macOS, se cambia a un único proceso con el ciclo dentro de Next.js (`instrumentation.ts`). |
