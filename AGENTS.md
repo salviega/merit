@@ -1,8 +1,5 @@
 # Merit
 
-<!-- [ADAPT] One or two sentences: what the project is and what problem it
-     solves. Same pitch as spec/definicion/02_solucion.md, summarized. -->
-
 A microcredit platform: people and financial entities put up liquidity
 allowances, and Merit lends them to borrowers without a credit history, with
 wallet-to-wallet disbursement and collection over Interledger Open Payments.
