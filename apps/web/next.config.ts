@@ -13,6 +13,10 @@ if (existsSync(rootEnv)) {
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // The shared package ships TypeScript sources.
+  transpilePackages: ["@merit/core"],
+  // Node-only libraries used by the route handlers stay outside the bundle.
+  serverExternalPackages: ["@interledger/open-payments", "proper-lockfile", "write-file-atomic"],
   turbopack: {
     rules: {
       "*.css": {

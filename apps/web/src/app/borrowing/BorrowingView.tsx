@@ -14,6 +14,7 @@ import { Status } from "@/components/Status";
 import { WalletAddress } from "@/components/WalletAddress";
 import { cop, exampleBorrower, exampleLoan } from "@/lib/examples";
 import { formatAmount, formatPercent } from "@/lib/format";
+import { LiveBorrowing } from "./LiveBorrowing";
 
 // Widget states (04 §4.2–4.3, 04 §6 "Estados de la solicitud de score"):
 //   locked    → wallet address; the amount form is disabled until there is a score (04 §1.4)
@@ -32,8 +33,10 @@ const labels = {
   active: "préstamo recibido",
 };
 
+// Without `?state=` the widget runs the real flow against /api/score; with it,
+// one of the example states below (for reviewing every screen without a wallet).
 export function BorrowingView() {
-  const state = useExampleState(states, "locked");
+  const state = useExampleState(states);
   return (
     <>
       <header className="flex flex-col gap-3">
@@ -47,6 +50,7 @@ export function BorrowingView() {
         </p>
       </header>
 
+      {state === undefined && <LiveBorrowing />}
       {state === "locked" && <Locked />}
       {state === "analyzing" && <Analyzing />}
       {state === "offer" && <Offer />}

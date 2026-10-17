@@ -28,6 +28,31 @@ Evidence conventions — what makes an entry verifiable instead of a claim:
 
 ### Added
 
+- `packages/core`, the logic the web and the repayment service share, with
+  Vitest and a coverage floor of 85 % enforced by the test command. The JSON
+  store (`db/`): one document validated by a `zod` schema, every write
+  through `withTransaction()` under a cross-process file lock with atomic
+  writes, and `(loan_id, incoming_payment_id)` unique by construction.
+  Pinned by `store.test.ts`, including two real processes writing the same
+  file. The score (`score.ts`): `scoreFromHistory` and `offerFor` per 05 §6,
+  pinned by `score.test.ts`.
+- The borrower history read, lifted from the `fetch_wallet.js` PoC into
+  `packages/core/open-payments`: read-only grant builders (never `create`),
+  paginated history cut at 90 days, interaction `hash` verification, token
+  rotation and revocation. Pinned by `grants.test.ts`, `history.test.ts`
+  and `interaction.test.ts`.
+- Flow 4.2 end to end in `apps/web`: `POST /api/score` starts the history
+  grant and sets a signed `httpOnly` cookie; `GET /api/callbacks/score`
+  verifies the provider's `hash`, continues the grant and computes the score
+  after responding; `GET /api/score` returns the request's state and offer
+  (never a token) and expires offers after 15 minutes. The borrowing widget
+  runs this flow and polls while analysing; `?state=` keeps the example
+  states. Evidence on the test network pending the client credentials; see
+  `07` Fase 2.
+- `pnpm seed:history`: pays a borrower test wallet several times from a
+  payer wallet (and once back) with one interactive grant per paying wallet,
+  so a fresh wallet has history to score.
+
 - The merit web, replacing the Interledger playground: the brand kit's
   tokens, fonts (Outfit, DM Sans, JetBrains Mono) and assets; the landing
   (`/`) with the figures from the problem statement rendered on the server
@@ -71,4 +96,6 @@ Evidence conventions — what makes an entry verifiable instead of a claim:
 
 ### Removed
 
+- `apps/api/fetch_wallet.js`, the history PoC: absorbed into
+  `packages/core/open-payments`.
 - `apps/cron/.env.example`: replaced by the root `.env.example`.

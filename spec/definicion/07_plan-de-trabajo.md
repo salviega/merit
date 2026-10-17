@@ -14,8 +14,8 @@
   Cloudflare Tunnel), `apps/cron` (hoy un Express de pruebas; termina siendo el
   servicio de cobro) y `packages/core` (todavía no existe; lo crea la fase
   2). El estado vive en `data/merit.json`, un archivo JSON con lock entre
-  procesos (05 §1). `apps/api/fetch_wallet.js/` es un **PoC** de lectura de historial que
-  se absorbe en `packages/core` y se borra en la fase 2.
+  procesos (05 §1). `apps/api/fetch_wallet.js/` era un **PoC** de lectura
+  de historial; la fase 2 lo absorbió en `packages/core` y lo borró.
 - **Punto de partida (2026-10-16):** repo con CI en pull requests, hook de
   Conventional Commits, documentos 01–06 escritos, un playground de pago
   (cotizar → aprobar → pagar) entre `apps/web` y `apps/cron`, el PoC de
@@ -197,7 +197,7 @@ Test sin errores; las siete pantallas recorridas con `?state=` en 390 px y
 
 ---
 
-## Fase 2 — Núcleo: `packages/core`, base de datos, historial y score
+## Fase 2 — Núcleo: `packages/core`, almacén JSON, historial y score
 
 **Objetivo:** que un solicitante real de la red de prueba autorice la
 lectura de su billetera y vea su score y su oferta en el widget (flujo 4.2
@@ -205,60 +205,68 @@ completo), con el cálculo probado sin red.
 
 **`packages/core` y datos:**
 
-- Crear `packages/core` (TypeScript unificado) con `db/`, `open-payments/`,
-  `score.ts` y `repayment.ts` vacío, más Vitest con `@vitest/coverage-v8` y
-  el umbral en la config, de modo que `pnpm test` falle debajo de él.
-- Almacén JSON en `db/`: esquema `zod` del documento con las seis
-  colecciones del 04 §3 (`lender_grants`, `score_requests`, `loans`,
-  `borrower_grants`, `observed_incoming_payments`, `repayments`) y
-  `withTransaction()` sobre `proper-lockfile` + `write-file-atomic`, que
-  rechaza duplicar `(loan_id, incoming_payment_id)`. Tests primero: una
-  escritura interrumpida no deja el archivo a medias; dos transacciones
-  desde dos procesos reales no pierden ninguna escritura; el duplicado
-  falla.
-- `open-payments/client.ts`: cliente autenticado único para las dos apps,
-  llave desde `OPEN_PAYMENTS_PRIVATE_KEY`.
+- ~~Crear `packages/core` (TypeScript unificado) con `db/`, `open-payments/`,
+  `score.ts` y `amount.ts`, más Vitest con `@vitest/coverage-v8` y el
+  umbral (85 %) en la config, de modo que `pnpm test` falle debajo de él.~~
+- ~~Almacén JSON en `db/`: esquema `zod` del documento con las seis
+  colecciones del 04 §3 y `withTransaction()` sobre `proper-lockfile` +
+  `write-file-atomic`, que rechaza duplicar `(loan_id,
+  incoming_payment_id)`. Tests primero, vistos fallar: una transacción que
+  lanza no toca el archivo; un documento inválido no se escribe; el
+  duplicado falla; 25 transacciones concurrentes en un proceso y 3 × 15 en
+  tres procesos reales no pierden ninguna escritura.~~
 
 **Historial del solicitante, a partir del PoC `apps/api/fetch_wallet.js`.**
-El PoC ya resolvió lo difícil; se traslada tal cual a `packages/core`
-y se corrige lo que lo hacía un prototipo:
+El PoC ya resolvió lo difícil; se trasladó a `packages/core` y se corrigió
+lo que lo hacía un prototipo:
 
-| Se toma del PoC (`server.js`) | A dónde va | Qué cambia |
-| ----------------------------- | ---------- | ---------- |
-| Grant de solo lectura: `incoming-payment` y `outgoing-payment` con `list`, `list-all`, `read`, `read-all`, `identifier = walletAddress.id`, sin `create`; `interact.start = ['redirect']` y `finish` con `nonce` | `open-payments/history-grant.ts` → `requestHistoryGrant(wallet)` | Igual. El `finish.uri` sale de `APP_URL` + `/api/callbacks/score`. |
-| `/callback`: `grant.continue` con `interact_ref` e `isFinalizedGrant` | `POST /api/callbacks/score` en `apps/web` | Antes de continuar se **verifica el `hash`** que devuelve el proveedor con el `nonce` guardado (05 §7). El estado pendiente deja de ser una variable en memoria: es la fila de `score_requests` (`continue_url`, `continue_token`, `nonce`), identificada por la cookie `httpOnly` firmada (05 §4). |
-| `listAll(resource)`: paginación con `first: 100` y `cursor` hasta `hasNextPage = false` | `open-payments/history.ts` → `listHistory(wallet, token, { since })` | Se corta al llegar a pagos con `createdAt` anterior a `since` (90 días, 05 §6) en vez de leer todo; devuelve `{ incoming, outgoing }` tipados y validados con `zod`. |
-| Columnas del CSV: `receivedAmount` para entrantes, `sentAmount` para salientes, `completed`, `failed` | Entradas del score | El score usa `receivedAmount` de los entrantes **completados** y `debitAmount` de los salientes **no fallidos** (05 §6), ignorando `sentAmount`. |
-| `/revoke`: `token.revoke` con `manage_url` | `open-payments/tokens.ts` | Se usa para revocar el token de historial una vez calculado el score: Merit no guarda acceso de lectura que ya no necesita. |
-| Express, `dotenv`, `private.key`, estado en memoria | Se eliminan | Route handlers de Next.js, variables de entorno del 06 §8, el almacén JSON. La carpeta `apps/api/` se borra en el commit que cierre esta parte. |
+| Se tomó del PoC (`server.js`) | A dónde fue | Qué cambió |
+| ----------------------------- | ----------- | ---------- |
+| Grant de solo lectura: `incoming-payment` y `outgoing-payment` con `list`, `list-all`, `read`, `read-all`, `identifier = walletAddress.id`, sin `create`; `interact.start = ['redirect']` y `finish` con `nonce` | `open-payments/grants.ts` → `historyGrantRequest(wallet, finish)` (puro, con test) | Igual. El `finish.uri` sale de `APP_URL` + `/api/callbacks/score`. |
+| `/callback`: `grant.continue` con `interact_ref` e `isFinalizedGrant` | `GET /api/callbacks/score` + `completeScoreCallback()` en `apps/web/src/lib/score-flow.ts` | Antes de continuar se **verifica el `hash`** (`open-payments/interaction.ts`: sha-256 de nonce, nonce del servidor, `interact_ref` y URL del grant). El estado pendiente es la fila de `score_requests`, identificada por la cookie `httpOnly` firmada (05 §4). |
+| `listAll(resource)`: paginación con `first: 100` y `cursor` hasta `hasNextPage = false` | `open-payments/history.ts` → `listHistory(client, wallet, token, { since })` | Se corta al llegar a pagos anteriores a `since` (90 días); devuelve `{ incoming, outgoing }` tipados. Test con un cliente falso: tres páginas, corte por fecha, filtros. |
+| Columnas del CSV: `receivedAmount` / `sentAmount`, `completed`, `failed` | Entradas del score | Entrantes **completados** por `receivedAmount`; salientes **no fallidos** por `debitAmount` (05 §6). |
+| `/revoke`: `token.revoke` con `manage_url` | `open-payments/tokens.ts` | El token de historial se revoca al terminar el score y se borra de la fila. |
+| Express, `dotenv`, `private.key`, estado en memoria | Eliminados | Route handlers de Next.js, `.env` de la raíz, el almacén JSON. ~~La carpeta `apps/api/` se borró.~~ |
 
 **Score y oferta (test primero):**
 
-- `score.ts`: función pura `scoreFromHistory(history, repaidLoans, now)`
-  con las entradas y la fórmula del 05 §6, y `offerFor(score, I,
-  availableLimit)` con la tabla de tramos; los parámetros en una sola
-  constante exportada. Pruebas escritas antes, y vistas fallar: billetera
-  vacía → rechazado; un solo ingreso grande → `regularidad` baja;
-  13 semanas con ingreso → `regularidad = 1`; salidas mayores que entradas
-  → `neto = 0`; `pagados` suma 25 por préstamo con tope 100; `max_amount`
-  nunca supera el mayor cupo disponible; score en [300, 1000].
-- `POST /api/score`: valida la _wallet address_, crea la `score_request`
-  (`pendiente_grant`), pide el grant y devuelve la URL del proveedor.
-- Callback: continúa el grant, pasa a `analizando`, lee el historial de 90
-  días, calcula score y oferta, revoca el token, guarda `aprobado` o
-  `rechazado`, redirige a `/borrowing`.
-- `GET /api/score`: estado y oferta de la solicitud de la cookie; el widget
-  hace polling mientras esté `analizando` y marca `vencido` a los 15 min.
-- `seed:history`: script que crea pagos entre dos billeteras de prueba
-  para que una billetera recién creada tenga historial que puntuar.
+- ~~`score.ts`: `scoreFromHistory(history, { now, repaidLoans })` y
+  `offerFor(score, I, availableLimit?)` con la tabla de tramos del 05 §6 en
+  `SCORE_PARAMS`. Tests vistos fallar: billetera vacía → 300; un solo ingreso
+  → `regularidad` 1/13; 13 semanas → 1; salidas > entradas → `neto` 0;
+  actividad tope en 20; `pagados` suma 25 con tope 100; ventana de 90 días e
+  `I` = suma/3; score en [300, 1000]; tramos 20/35/50 % y 8/6/4 %; nunca más
+  que el cupo disponible; sin cupo (0) → rechazado.~~
+- ~~`POST /api/score`: valida la _wallet address_ (`https://…` o `$…`),
+  crea la `score_request` (`pending_grant`), pide el grant y devuelve
+  `{ redirect }` con la cookie firmada.~~
+- ~~Callback: verifica `hash`, continúa el grant, pasa a `analyzing`,
+  redirige a `/borrowing` y calcula después de responder (`after()`): lee 90
+  días, score, oferta, revoca el token, guarda `approved` o `rejected`.~~
+- ~~`GET /api/score`: estado y oferta de la solicitud de la cookie (nunca el
+  token); marca `expired` a los 15 minutos. El widget hace polling cada 2 s
+  mientras esté `pending_grant` o `analyzing`; `?state=` sigue mostrando los
+  estados de ejemplo.~~
+- ~~Si no hay ningún cupo activo en la moneda, la oferta se calcula solo por
+  tramo y se guarda `quotaAvailable = false`; el widget lo dice en la razón
+  del botón. El tope real del cupo se aplica al tomar el préstamo (fase 3).~~
+- ~~`seed:history` (`scripts/seed-history.ts`): C paga N veces a B y B una
+  vez a C, con un solo grant interactivo por billetera pagadora.~~
 
-**Verificación:** `pnpm test` pasa con el umbral; en el preview de Vercel,
-una billetera de prueba sembrada con `seed:history` entra a `/borrowing`,
-aprueba el grant en `wallet.interledger-test.dev`, vuelve, ve "Analizando…"
-y luego un score ≥ 500 con monto máximo, tasa e interés; una billetera sin
-historial ve "rechazado". En `data/merit.json`, la `score_request` quedó
-`aprobado` y el token de historial fue revocado (un segundo `listHistory`
-con él falla).
+**Verificación:** ~~`pnpm test` pasa con el umbral (35 tests, cobertura
+> 85 %); `pnpm typecheck`, `pnpm lint` y `pnpm build` limpios; con `next
+start`, `GET /api/score` sin cookie responde `{ "status": "none" }`, un
+cuerpo inválido responde 400 con el mensaje en español, y el callback sin
+cookie redirige a `/borrowing?error=session` (2026-10-16).~~ **Pendiente,
+necesita el `.env` con las credenciales de Merit y la billetera B
+sembrada:** con el túnel arriba, B aprueba el grant en
+`wallet.interledger-test.dev`, vuelve, ve "Analizando…" y luego un score ≥
+500 con monto máximo, tasa e interés; una billetera sin historial ve
+"rechazado"; en `data/merit.json` la `score_request` quedó `approved` sin
+`accessToken`, y un segundo uso del token revocado falla. Ese mismo
+recorrido cierra la compuerta `list-all` de la fase 0 y confirma el `hash`
+contra un callback real.
 
 ---
 

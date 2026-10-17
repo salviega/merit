@@ -10,9 +10,13 @@
     "dev:web": "pnpm --filter web dev",
     "dev:cron": "pnpm --filter cron dev",
     "tunnel": "node scripts/tunnel.mjs",
+    "seed:history": "tsx scripts/seed-history.ts",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r --if-present test"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
   }
 }

@@ -66,22 +66,29 @@ billetera.
 merit/
 ├─ apps/
 │  ├─ web/               Next.js 16: páginas + route handlers /api
-│  │  └─ src/app/
-│  │     ├─ page.tsx                 home (Lending / Borrowing)
-│  │     ├─ lending/                 formulario y cupo activo
-│  │     ├─ borrowing/               widget: analizar, oferta, préstamo
-│  │     └─ api/
-│  │        ├─ lenders/              POST: inicia el grant del cupo
-│  │        ├─ score/                POST: inicia el grant del historial; GET: estado
-│  │        ├─ loans/                POST: reserva cupo e inicia el grant de cobro
-│  │        └─ callbacks/[kind]/     vuelta del proveedor (lender | score | loan)
+│  │  └─ src/
+│  │     ├─ app/
+│  │     │  ├─ page.tsx              landing (Aportar liquidez / Pedir préstamo)
+│  │     │  ├─ como-funciona/
+│  │     │  ├─ lending/              formulario y cupo activo
+│  │     │  ├─ borrowing/            widget: analizar, oferta, préstamo
+│  │     │  └─ api/
+│  │     │     ├─ score/             POST: inicia el grant del historial; GET: estado
+│  │     │     ├─ lenders/           POST: inicia el grant del cupo (fase 3)
+│  │     │     ├─ loans/             POST: reserva cupo e inicia el grant de cobro (fase 3)
+│  │     │     └─ callbacks/<kind>/  vuelta del proveedor (score | lender | loan)
+│  │     ├─ components/              Button, Field, Card, ScoreRing, … (09 §7)
+│  │     └─ lib/                     env, store, session (cookie), score-flow, site, format
 │  └─ cron/              servicio de cobro: ciclo cada 5 s, sin HTTP
 ├─ packages/
-│  └─ core/
+│  └─ core/src/
 │     ├─ db/             esquema zod del documento y almacén JSON con lock
-│     ├─ open-payments/  cliente autenticado, grants, rotación de tokens
+│     ├─ open-payments/  cliente autenticado, grants, historial, hash, tokens
 │     ├─ score.ts        historial → score y oferta (puro)
-│     └─ repayment.ts    ingresos → cuotas (puro)
+│     ├─ repayment.ts    ingresos → cuotas (puro, fase 4)
+│     └─ amount.ts       aritmética en unidades mínimas (bigint)
+├─ scripts/              tunnel.mjs, seed-history.ts
+├─ brand/                logos, tokens, fuentes
 ├─ data/                 merit.json (ignorado por git)
 └─ spec/
 ```

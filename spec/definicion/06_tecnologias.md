@@ -22,7 +22,7 @@
 | ---------- | ------- | -------- |
 | Archivo JSON (`data/merit.json`) | — | Almacén compartido por la web y el servicio de cobro, en la misma máquina. Ignorado por git. |
 | `proper-lockfile` | 4.1.2 | Lock entre procesos sobre el archivo: una sola transacción escribe a la vez. |
-| `write-file-atomic` | 7.0.0 | Escritura temporal + `rename`: el archivo nunca queda a medias. |
+| `write-file-atomic` | 8.0.0 | Escritura temporal + `rename`: el archivo nunca queda a medias. |
 | `zod` | 4.6.7 | Esquema del documento completo; se valida al leer y antes de escribir. |
 
 ---
@@ -63,7 +63,7 @@ son tres campos en total.
 | Vitest | 5.0.5 | Pruebas de `packages/core`: score, oferta, cuotas, el almacén (incluida concurrencia entre dos procesos) y el ciclo de cobro contra un archivo temporal. |
 | `@vitest/coverage-v8` | 5.0.5 | Cobertura de `packages/core`; el umbral se declara en la config de Vitest, así `pnpm test` falla debajo del piso. |
 | ESLint | 9 (`eslint-config-next`) | Lint de `apps/web`. |
-| `tsx` | 4.23.15 | Corre `apps/cron` en desarrollo con recarga. |
+| `tsx` | 4.23.15 | Corre `apps/cron` en desarrollo con recarga y los scripts de la raíz (`seed:history`). |
 | GitHub Actions | — | CI en cada pull request: lint, typecheck y build (y `test` cuando exista). |
 
 ---

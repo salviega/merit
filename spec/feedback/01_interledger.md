@@ -16,11 +16,53 @@ _Se llena mientras se construye._
 
 ## Bitácora
 
-_Sin entradas todavía._ La primera esperada es la **compuerta `list-all`**
-de la fase 0 del [07](../definicion/07_plan-de-trabajo.md): si el proveedor
-de prueba devuelve, con un grant interactivo de solo lectura, los pagos de
-una billetera que Merit no creó. Se anota el resultado, qué campos vinieron
-en cada pago, cómo paginó y el `expires_in` del token.
+Pendiente la **compuerta `list-all`** de la fase 0 del
+[07](../definicion/07_plan-de-trabajo.md): si el proveedor de prueba
+devuelve, con un grant interactivo de solo lectura, los pagos de una
+billetera que Merit no creó. Se anota el resultado, qué campos vinieron en
+cada pago, cómo paginó y el `expires_in` del token.
+
+### 2026-10-16 — El `hash` del callback: "sin padding" en la guía, con padding en Rafiki
+
+**Documentado / prometido:** la guía de verificación del hash
+(`openpayments.dev/identity/hash-verification/`) dice que el digest SHA-256
+se codifica "using Base64 with no padding"; su propio ejemplo de código usa
+`digest('base64')`, que en Node sí lleva padding.
+
+**Encontrado:** el servidor de autorización de Rafiki (`packages/auth/src/
+interaction/routes.ts`, `handleFinishableGrant`) calcula
+`sha-256(clientNonce\ninteractNonce\ninteractRef\ngrantRequestUrl)` y lo
+emite con `digest('base64')`, es decir, **con** padding y alfabeto estándar.
+La guía y la implementación de referencia no coinciden en el detalle que
+decide si la comparación pasa.
+
+**Evidencia:** `packages/core/src/open-payments/interaction.ts` normaliza
+padding y alfabeto url-safe antes de comparar, y
+`interaction.test.ts` fija el cálculo. Falta confirmarlo contra un callback
+real de la red de prueba (fase 2 del 07).
+
+**Impacto en el proyecto:** ninguno en tiempo, pero una implementación
+literal de la guía ("sin padding") rechazaría todos los callbacks del
+proveedor de prueba.
+
+**Reportado:** pendiente.
+
+### 2026-10-16 — `PaginationArgs` exige `wallet-address` aunque `list()` ya lo recibe
+
+**Documentado / prometido:** `client.incomingPayment.list(args, pagination)`
+recibe `walletAddress` en `args`; el PoC en JavaScript paginaba con
+`{ first, cursor }` sin problema.
+
+**Encontrado:** en TypeScript, `PaginationArgs` (`ForwardPagination`) hace
+obligatorio `"wallet-address"` también en el segundo argumento, así que
+`{ first: 100 }` no compila (`TS2345`). Hay que repetir la dirección.
+
+**Evidencia:** `@interledger/open-payments@7.4.0`, `dist/types.d.ts`
+líneas 28–35; `packages/core/src/open-payments/history.ts` (`Pagination`).
+
+**Impacto en el proyecto:** diez minutos. Una nota, no un hallazgo.
+
+**Reportado:** pendiente.
 
 <!--
 ### AAAA-MM-DD — Título corto del hallazgo
