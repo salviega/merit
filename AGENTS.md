@@ -1,9 +1,11 @@
-# [Project name]
+# Merit
 
 <!-- [ADAPT] One or two sentences: what the project is and what problem it
      solves. Same pitch as spec/definicion/02_solucion.md, summarized. -->
 
-[One or two sentence elevator pitch.]
+A microcredit platform: people and financial entities put up liquidity
+allowances, and Merit lends them to borrowers without a credit history, with
+wallet-to-wallet disbursement and collection over Interledger Open Payments.
 
 The definition lives in `spec/definicion/` (numbered documents);
 `07_plan-de-trabajo.md` is the phased plan and doubles as the progress log —

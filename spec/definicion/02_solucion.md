@@ -2,55 +2,58 @@
 
 > **Alcance de este documento:** qué es el proyecto y qué obtiene cada actor. **No define pantallas ni stack.**
 > **Depende de:** [01 — Contexto y Problema](./01_contexto-y-problema.md)
->
-> <!-- Este documento responde la pregunta con la que cerró el 01. Sigue sin
->      bajar a pantallas o tecnología — eso es el 04 y el 05. Aquí solo se
->      responde "qué es" y "qué gana cada quien", en el nivel al que se lo
->      explicarías a alguien en el ascensor. -->
 
 ---
 
 ## Qué es
 
-<!-- Una frase que define el proyecto y nombra a los actores (el "elevator
-     pitch"). Un párrafo con lo que hace cada actor y, si existe, contra qué
-     alternativa real compite (la del 01: la hoja de cálculo, el proceso
-     manual, etc.). -->
+Merit es una plataforma de microcrédito: personas y entidades financieras
+ponen cupos de liquidez, y Merit los presta a quienes lo necesitan, con
+desembolso y cobro automáticos de billetera a billetera.
 
-_Una frase que define el proyecto y nombra a los actores._
-
-_Un párrafo con lo que hace cada uno, y contra qué alternativa existente
-compite._
+Es el canal que conecta el dinero disponible con quien necesita crédito.
+Hay dos actores: el **prestamista**, una persona o entidad que pone un cupo,
+y el **solicitante**, que pide un préstamo sin tener historial bancario.
+Para el solicitante, la alternativa hoy es el crédito no regulado. Para el
+prestamista, no prestar. Todo funciona sobre Interledger y Open Payments,
+entre billeteras de distintos proveedores y sin que el dinero pase por una
+cuenta de Merit.
 
 ## Cómo funciona
 
-<!-- Una subsección por actor (o, si solo hay un tipo de usuario, por paso
-     del flujo principal). Cada una: qué abre, qué ve, qué decide. Concreto,
-     no una lista de features. -->
+### Para el prestamista
 
-### Para el _actor 1_
+Autoriza un cupo desde su billetera, desde cualquier país y en cualquier
+moneda. El dinero no sale de su cuenta hasta que se presta. Cuando se
+presta, recupera lo prestado a medida que el solicitante paga, sin tener
+que cobrarle él mismo.
 
-_Qué abre, qué ve, qué decide._
+### Para el solicitante
 
-### Para el _actor 2_
+Pide un préstamo sin necesitar historial bancario. Merit analiza los
+movimientos de su billetera, genera un score y, si lo aprueba, el dinero
+llega de inmediato.
 
-_Qué abre, qué ve, qué decide._
+El cobro es automático: cada vez que el solicitante recibe dinero, se
+descuenta un porcentaje para pagarle al prestamista hasta saldar la deuda.
+Paga cuando le entra plata y en proporción a lo que recibe. Cada préstamo
+pagado sube su score y le abre montos mayores.
 
 ## Qué resuelve
 
-<!-- Enlaza cada punto de vuelta al problema del 01 — cada capacidad nueva
-     cierra un hueco concreto que ya nombraste ahí. Si una capacidad no
-     resuelve nada del 01, probablemente sobra en esta versión. -->
-
-- **_Capacidad 1_:** _qué problema del 01 cierra._
-- **_Capacidad 2_:** _qué problema del 01 cierra._
+- **Score a partir de los movimientos de la billetera:** cierra la barrera
+  del historial y los documentos que el sistema exige y la mayoría no tiene,
+  la razón por la que 1 de cada 5 acude a vías no reguladas.
+- **Cupos autorizados desde la billetera, en cualquier país y moneda:** le
+  da al dinero disponible, incluida la liquidez del exterior, una forma de
+  llegar a quien necesita crédito.
+- **Cobro automático como porcentaje de cada ingreso:** le quita al
+  prestamista el problema de cobrar, y al solicitante le ajusta el pago a lo
+  que efectivamente recibe.
+- **Score que sube con cada préstamo pagado:** convierte el buen
+  comportamiento en acceso a montos mayores, el historial que hoy no existe.
 
 ## Alcance inicial
 
-<!-- Hasta dónde llega la PRIMERA versión: territorio, dispositivo, contexto
-     de uso, volumen. Es la frontera entre "lo que se construye ahora" y "lo
-     que va al roadmap" (08) — sé explícito, porque el 04 y el 07 van a
-     asumir esta frontera. -->
-
-_Hasta dónde llega la primera versión: territorio, dispositivo, contexto de
-uso._
+_Por definir: territorio, monedas, tipo de billetera y montos de la primera
+versión._
