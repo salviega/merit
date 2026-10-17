@@ -28,6 +28,22 @@ Evidence conventions — what makes an entry verifiable instead of a claim:
 
 ### Added
 
+- The merit web, replacing the Interledger playground: the brand kit's
+  tokens, fonts (Outfit, DM Sans, JetBrains Mono) and assets; the landing
+  (`/`) with the figures from the problem statement rendered on the server
+  and the two paths, **Aportar liquidez** and **Pedir préstamo**;
+  `/como-funciona`; `/lending` and `/borrowing` with every state of the
+  design (04 §5–§6) driven by example data and a `?state=` switcher until the
+  API exists. Components carry their states in their header comment; a
+  disabled button always says why. Evidence: the Vercel preview of the
+  phase 1 pull request, one screenshot per state.
+- SEO surface from one source (`src/lib/site.ts`): title template,
+  description, Open Graph and X card with the 1200×630 image, icons and
+  manifest, canonical, JSON-LD (`WebApplication`), `robots.txt` and
+  `sitemap.xml`. `/lending` and `/borrowing` are `noindex` (they depend on
+  the wallet state); on Vercel the landing's buttons point to
+  `NEXT_PUBLIC_APP_URL`, the app behind the tunnel.
+
 - One `.env` at the repo root for every app and script, with `.env.example`
   listing every key. `apps/web` loads it from `next.config.ts` and
   `apps/cron` through `--env-file`, so the two processes that share the

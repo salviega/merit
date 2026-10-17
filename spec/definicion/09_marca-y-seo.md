@@ -1,7 +1,9 @@
 # 09 — Marca, interfaz y SEO
 
-> **Alcance:** cómo se ve, cómo habla y cómo se encuentra merit: marca, reglas de interfaz y SEO. Queda resuelto **antes** del plan de trabajo, para que ninguna fase tenga que inventar un color, un texto o una etiqueta `<title>`.
-> **Depende de:** `docs/01-producto.md` · `docs/09-ui.md` del paquete de handoff.
+> **Alcance de este documento:** cómo se ve, cómo habla y cómo se encuentra merit: marca, reglas de interfaz y SEO. Ninguna fase del [07](./07_plan-de-trabajo.md) inventa un color, un texto o una etiqueta `<title>`: salen de aquí.
+> **Depende de:** [02 — Solución](./02_solucion.md) · [04 — Diseño de la solución](./04_diseno-de-solucion.md)
+>
+> El kit se diseñó con un modelo de producto anterior (pool, cuotas mensuales, WhatsApp). Donde este documento y el 04/05 se contradecían, manda el 04/05; la reconciliación se hizo en la fase 1 del 07 (2026-10-16).
 
 ---
 
@@ -98,9 +100,9 @@ Las tres son SIL OFL. La web las carga con `next/font/google` como `--font-outfi
 | --- | --- | --- |
 | Monto | COP, agrupación `es-CO`, sin decimales en UI, símbolo siempre | `$300.000` |
 | Monto con moneda explícita | En resúmenes y comprobantes | `$1.000.000 COP` |
-| Cuota | monto × número | `$53.197 × 6` |
-| Tasa | Mensual, un decimal, coma decimal | `1,8 %` |
-| Score | Entero + banda | `720 · BUENO` |
+| Cuota | Porcentaje de cada ingreso, entero, espacio antes de % | `20 % de cada ingreso` |
+| Tasa | Sobre el capital (no anual, 04 §8), entero, espacio antes de % | `6 %` |
+| Score | Entero 300–1000 (05 §6) + banda: Bajo < 500 · Regular 500–649 · Bueno 650–799 · Excelente ≥ 800 | `720 · BUENO` |
 | Wallet address | Abreviada `$host/path` en mono; completa en "Detalles" | `$wallet.ejemplo/ana` |
 | Porcentajes de contexto | Un decimal, coma decimal, espacio antes de % | `96,5 %` |
 | Pendiente de definir | Marcador entre corchetes, nunca un cero | `[APY]`, `[N] días` |
@@ -129,11 +131,10 @@ Español, tuteo, frases cortas, sin letra pequeña. La marca siempre en minúscu
 | --- | --- |
 | Landing, lender | `Aportar liquidez` |
 | Landing, borrower | `Pedir préstamo` |
-| Vincular | `Vincular wallet` |
-| Pedir | `Pedir $300.000` |
-| Enviar aporte | `Enviar y autorizar en mi wallet` |
-| Depositar | `Depositar en el pool` |
-| WhatsApp | `Aprobar crédito` · `Rechazar` · `Autorizar en mi wallet` |
+| Analizar la wallet (borrower) | `Analizar mis movimientos` |
+| Pedir | `Pedir $300.000` (con el monto elegido) |
+| Autorizar el cupo (lender) | `Enviar y autorizar en mi wallet` |
+| Volver | `Volver al inicio` · `Volver a empezar` |
 
 **Errores:** qué pasó y qué hacer. "El monto supera tu cupo disponible de $500.000. Baja el monto o paga tu cuota pendiente para subirlo." No "Error 400". Sin signos de exclamación: es dinero.
 
@@ -145,21 +146,22 @@ Español, tuteo, frases cortas, sin letra pequeña. La marca siempre en minúscu
 
 | Objeto | Estados |
 | --- | --- |
-| Wallet | Sin vincular · resolviendo · encontrada (nombre, moneda, proveedor) · moneda no soportada · URL inválida |
-| Aporte (lender) | Creado · esperando autorización en la wallet · pagando · recibido · fallido · expirado |
-| Oferta (borrower) | Enviada a WhatsApp · aprobada · rechazada · vencida |
-| Crédito | Autorizado · desembolsando · activo · pagado · en mora · cancelado |
-| Cuota | Programada · cobrando · pagada · fallida · atrasada |
+| Wallet | Sin vincular · resolviendo · encontrada (moneda, proveedor) · URL inválida |
+| Cupo (lender, 04 §6) | Formulario · pendiente (autorizando en la wallet) · activo (cupo, disponible, comprometido) · agotado · revocado |
+| Solicitud de score (borrower, 04 §6) | Bloqueado (sin score, formulario de monto deshabilitado) · analizando · aprobado (oferta) · rechazado · vencido (15 min) |
+| Préstamo (04 §6) | Pendiente de autorización · desembolsando · activo (recibido, total, % por ingreso, pagado) · pagado · fallido |
+| Cuota (04 §3) | Pendiente · pagada · fallida |
 | Datos | Cargando (skeleton) · vacío (qué es y cómo empezar) · error de red (reintentar) · desactualizado (hace cuánto) |
 
 **El momento de autorizar es el pico de cada flujo.** Antes de enviar al usuario a su wallet, sin scroll y sin jerga:
 
 | Autorización | Qué se mueve | Qué va a pasar | Qué **no** pasa | Qué se puede deshacer |
 | --- | --- | --- | --- | --- |
-| Aporte de liquidez | Tu dinero, una vez | El pool recibe el monto y empieza a generar rendimiento | merit no puede volver a cobrar sin otra autorización | Retiro con aviso de [N] días |
-| Cobro de cuotas | Una cuota al mes, N meses | Cada mes se cobra la cuota desde tu wallet | merit no puede cobrar más que la cuota ni más veces que las pactadas | Revocable en tu wallet; el crédito queda en mora |
+| Cupo (lender) | Tu dinero, solo cuando alguien toma un préstamo, nunca más que el cupo | Tu proveedor te muestra el cupo y lo autorizas una vez | merit no guarda tu dinero ni puede sacar más que el cupo | Revocable en tu wallet; lo ya prestado sigue volviendo |
+| Lectura del historial (borrower) | Nada: es un permiso de lectura | Tu proveedor te pide autorizar que merit lea tus pagos de 90 días | merit no puede mover dinero con este permiso | Se revoca solo al calcular el score; también en tu wallet |
+| Cobro (borrower) | Hasta el total a pagar, desde tu wallet, a medida que recibas ingresos | El 20 % de cada ingreso va a quien te prestó hasta completar el total | merit no puede cobrar más del total ni descontar dos veces el mismo ingreso | Revocable en tu wallet; el préstamo queda pendiente de pago |
 
-"Automático" se explica con el límite: "una cuota al mes, seis veces, nunca más que $53.197".
+"Automático" se explica con el límite: "el 20 % de cada ingreso que recibas, hasta completar $318.000; nunca más que eso".
 
 **Lo técnico está a un clic.** URLs completas de wallet, IDs de pago y referencias van detrás de "Detalles".
 
@@ -183,15 +185,17 @@ Español, tuteo, frases cortas, sin letra pequeña. La marca siempre en minúscu
 | Canonical | `metadata.tsx` | `alternates.canonical` |
 | Íconos y PWA | `metadata.tsx` + `manifest.ts` | favicon SVG e ICO, apple-touch 180, manifest 192/512 + maskable |
 | `robots.txt` | `robots.ts` | Todo rastreable, con el sitemap |
-| `sitemap.xml` | `sitemap.ts` | `/`, `/como-funciona`, `/seguridad` |
+| `sitemap.xml` | `sitemap.ts` | `/`, `/como-funciona` |
 
 **Qué se indexa y qué no:**
 
 | Ruta | Indexable | Por qué |
 | --- | --- | --- |
 | `/` (landing) | Sí | La portada: tesis, cifras, dos botones |
-| `/como-funciona`, `/seguridad` | Sí | Contenido propio |
-| `/app`, `/lender/*`, `/borrower/*`, `/admin`, `/autorizacion/*` | No (`privatePageRobots`) | Dependen de la sesión: vacías para un buscador |
+| `/como-funciona` | Sí | Contenido propio: los dos flujos, el score, lo que merit no puede hacer |
+| `/lending`, `/borrowing` | No (`privatePageRobots`) | Dependen del estado de la wallet: vacías para un buscador |
+
+**Dónde vive cada ruta.** La landing y `/como-funciona` se sirven desde Vercel; `/lending` y `/borrowing` corren en la máquina de la demo detrás del túnel (05 §2). Los botones de la landing llevan a `NEXT_PUBLIC_APP_URL` + la ruta; en local, a la misma origen.
 
 Las páginas privadas llevan `noindex` en la meta, **no** `Disallow` en `robots.txt`.
 
@@ -221,8 +225,6 @@ Las páginas privadas llevan `noindex` en la meta, **no** `Disallow` en `robots.
 
 ## 10. Pendientes
 
-- **Dominio.** El playground vive en `merit-ten-rust.vercel.app`. Fijar `NEXT_PUBLIC_SITE_URL` al dominio de producción antes de compartir enlaces: `site.ts` cae a `VERCEL_PROJECT_PRODUCTION_URL` y nunca a un alias de preview (que pide login y rompe la tarjeta).
-- **Redes y repo.** Completar `site.social` cuando existan; el JSON-LD los toma solo.
-- **Botón de Google.** Usar el botón oficial de Google Identity Services; los mockups llevan un placeholder.
-- **Plantillas de WhatsApp.** El copy del tablero "Aprobación por WhatsApp" es la base para enviar a aprobación de Meta.
-- **Rutas Borrowing.** El botón "Pedir préstamo" de la landing todavía no tiene pantallas; el flujo (monto → plazo → WhatsApp → wallet) está especificado en `docs/03-flujos.md` del handoff.
+- **Dominio.** En Vercel, `site.ts` usa `VERCEL_PROJECT_PRODUCTION_URL` (nunca un alias de preview, que pide login y rompe la tarjeta); en la máquina de la demo, `APP_URL`. Fijar `NEXT_PUBLIC_APP_URL` en Vercel al hostname del túnel antes de compartir enlaces.
+- **Redes y repo.** Completar `site.social` cuando existan; el JSON-LD y el pie los toman solos.
+- **Moneda de los ejemplos.** Los textos y ejemplos están en COP; las billeteras de la red de prueba pueden estar en otra moneda, y `formatAmount` ya la respeta. Confirmar con la demo qué moneda se muestra.

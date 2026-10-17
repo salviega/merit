@@ -131,97 +131,69 @@ un color ni un texto.
 **Integrar el kit:**
 
 - ~~`brand/` en la raíz (logos, `tokens.json`, fuentes, `generate.py`,
-  `render.js`) y `spec/definicion/09_marca-y-seo.md`.~~ Falta la parte web
-  del kit: `apps/web/public/` (favicon, iconos, `og-image.png`),
-  `apps/web/src/lib/site.ts` y `apps/web/src/app/` (`globals.css`,
-  `layout.tsx`, `metadata.tsx`, `manifest.ts`, `robots.ts`, `sitemap.ts`).
-- Añadir el `09_marca-y-seo.md` al índice de `spec/README.md` y corregir su "Depende de" (hoy
-  apunta a un paquete de handoff que no existe en este repo; depende del
-  [02](./02_solucion.md) y del [04](./04_diseno-de-solucion.md)).
-- **Reconciliar el 09 con el 04 y el 05**, en el mismo PR, porque el kit
-  se diseñó con un modelo de producto distinto en algunos puntos:
-  - Score: el rango es **300–1000** (05 §6), no 300–850; las bandas del 09
-    (Bajo · Regular · Bueno · Excelente) se mapean a los tramos del 05 §6.
-  - Cobro: no hay "una cuota al mes, N meses" ni pool. El texto del momento
-    de autorizar (09 §7) se reescribe al modelo real: "el 20 % de cada
-    ingreso que recibas, hasta completar $Y; nunca más que eso".
-  - Estados: los del 09 §7 se sustituyen por los del 04 §6 (préstamo,
-    cupo, solicitud de score, cuota).
-  - Rutas: se mantienen las del 05 §3, `/lending` y `/borrowing`; las
-    rutas `/app`, `/lender/*`, `/borrower/*` y WhatsApp del 09 no existen.
-  - Botones: el home usa la voz del 09, **Aportar liquidez** (Señal) y
-    **Pedir préstamo** (Mérito); "Lending" y "Borrowing" quedan solo como
-    etiqueta mono. Se actualiza el 04 §4 y §5 en consecuencia.
-  - `site.ts` lee `APP_URL` (06 §8) con fallback a
-    `VERCEL_PROJECT_PRODUCTION_URL`; no se añade `NEXT_PUBLIC_SITE_URL`.
+  `render.js`) y `spec/definicion/09_marca-y-seo.md`.~~
+- ~~La parte web del kit: `apps/web/public/` (favicon, iconos,
+  `og-image.png`), `apps/web/src/lib/site.ts` y `apps/web/src/app/`
+  (`globals.css`, `layout.tsx`, `metadata.tsx`, `manifest.ts`, `robots.ts`,
+  `sitemap.ts`).~~
+- ~~El `09_marca-y-seo.md` en el índice de `spec/README.md`, con su "Depende
+  de" apuntando al 02 y al 04.~~
+- ~~**Reconciliar el 09 con el 04 y el 05** (2026-10-16): score 300–1000 con
+  las bandas Bajo/Regular/Bueno/Excelente; cobro como 20 % de cada ingreso,
+  sin pool ni cuotas mensuales; estados del 04 §6; rutas `/lending` y
+  `/borrowing`; botones **Aportar liquidez** (Señal) y **Pedir préstamo**
+  (Mérito) con "Lending"/"Borrowing" solo como etiqueta, y el 04 §4–§5
+  actualizado en consecuencia; `site.ts` usa `VERCEL_PROJECT_PRODUCTION_URL`
+  en Vercel y `APP_URL` en la máquina de la demo, sin `NEXT_PUBLIC_SITE_URL`.~~
 
 **Estilos:**
 
-- `globals.css` del kit reemplaza al actual: tokens `@theme` (Noche,
-  Grafito, Línea, Hueso, Niebla, Mérito, Lavanda, Señal, Ámbar, Coral,
-  Papel), radios y las utilidades `.wordmark` y `.num`. Tema oscuro único,
-  como define el 09 §3; Papel solo para documentos.
-- Fuentes con `next/font/google`: Outfit, DM Sans y JetBrains Mono como
-  `--font-outfit`, `--font-dm-sans`, `--font-jetbrains-mono`. Se quita
-  Geist.
-- Componentes base en `src/components/`, cada uno con sus estados listados
-  antes de escribirlo (09 §7): botón (primario Mérito, confirmación Señal,
-  secundario, deshabilitado **con la razón escrita**, cargando), campo con
-  etiqueta y error (borde Coral, texto que explica qué pasó y qué hacer),
-  tarjeta Grafito, skeleton, estado vacío, mensaje de estado con prefijo
-  mono `[OK]`, `[ ! ]`, `[ x ]`, anillo de score con banda, y bloque
-  "Detalles" plegable para URLs completas e IDs.
-- Pantallas, cada una con **una acción principal** (04 §1.5):
-  - `/` landing: tesis en una línea, las cifras del 01 renderizadas en el
-    servidor, y dos caminos: **Aportar liquidez** y **Pedir préstamo**.
-  - `/lending`: formulario de _wallet address_ y cupo → "Enviar y
-    autorizar en mi wallet"; estado "Cupo activo" (cupo, disponible,
-    comprometido). Antes de redirigir, la tarjeta de autorización del 09
-    §7: qué se mueve, qué va a pasar, qué no pasa, qué se puede deshacer.
-  - `/borrowing`: el widget con sus estados, **bloqueado** (formulario de
-    monto deshabilitado hasta tener score, 04 §1.4, con la razón escrita),
-    **analizando** (skeleton, "Analizando tus movimientos…"), **oferta**
-    (score con banda, monto máximo, tasa, interés máximo; formulario
-    desbloqueado con el máximo como tope y el botón `Pedir $X`),
-    **rechazado** (lo dice, sin formulario) y **préstamo recibido** (monto,
-    total a pagar, porcentaje por ingreso, lo pagado).
-  - Los estados se alimentan de datos fijos de ejemplo hasta la fase 2 y se
-    eligen con un parámetro de la URL para poder mostrar cada uno.
-- Números según el 09 §5: una sola función `formatAmount` desde `value` +
-  `assetCode` + `assetScale` con agrupación `es-CO`, `tabular-nums` en todo
-  monto, score y saldo; _wallet addresses_ abreviadas `$host/path` en mono
-  con la URL completa en "Detalles".
-- Accesibilidad AA: foco visible Mérito, objetivos de 44 px, nada que
-  dependa solo del color. Se revisa en 390 px y 1440 px con _wallet
-  addresses_ largas y montos de siete cifras.
-- Se eliminan la página del playground, los SVG de ejemplo de `public/` y
-  todo texto que use las palabras prohibidas del 09 §6.
+- ~~`globals.css` del kit: tokens `@theme`, radios, `.wordmark`, `.num`,
+  `.label`, `.skeleton`. Tema oscuro único (09 §3).~~
+- ~~Fuentes con `next/font/google`: Outfit, DM Sans y JetBrains Mono. Geist
+  fuera.~~
+- ~~Componentes en `src/components/` con sus estados en el comentario de
+  cabecera: `Button` (Mérito, Señal, secundario, deshabilitado con la razón
+  escrita, cargando), `Field`, `Card`, `Skeleton`, `Status` (prefijo mono),
+  `ScoreRing`, `Details`, `Amount`, `WalletAddress`, `AuthorizationCard`
+  (09 §7), `SiteHeader`, `SiteFooter` y `StateSwitcher`.~~
+- ~~Pantallas, cada una con una acción principal (04 §1.5): `/` (landing
+  con las cifras del 01 en el servidor, **Aportar liquidez** y **Pedir
+  préstamo** hacia `NEXT_PUBLIC_APP_URL`), `/como-funciona`, `/lending`
+  (formulario, tarjeta de autorización, autorizando, cupo activo, revocado)
+  y `/borrowing` (bloqueado, analizando, oferta, rechazado, vencido,
+  préstamo recibido). Los estados salen de `src/lib/examples.ts` y se eligen
+  con `?state=` hasta la fase 2.~~
+- ~~`formatAmount`, `formatPercent`, `abbreviateWallet` y `scoreBand` en
+  `src/lib/format.ts` (09 §5), con `tabular-nums` en todo monto.~~
+- ~~Playground y SVG de ejemplo eliminados.~~
+- Revisar en 390 px y 1440 px con _wallet addresses_ largas y montos de
+  siete cifras; foco visible y objetivos de 44 px (AA).
 
 **SEO:**
 
-- `metadata.tsx` del kit como `metadata` del `layout`: `merit — Crédito que
-  se gana`, plantilla `%s — merit`, descripción de `site.ts`,
-  `metadataBase`, Open Graph y X con `og-image.png` 1200 × 630, iconos,
-  `manifest`, `robots` indexable, canonical. `<html lang="es">`.
-- `JsonLd` (`WebApplication`, `FinanceApplication`) en la landing.
-- `/lending` y `/borrowing` con `privatePageRobots` (`noindex` en la meta,
-  no `Disallow`): dependen del estado de la billetera y están vacías para
-  un buscador. `sitemap.ts` lista `/` y `/como-funciona`.
-- `/como-funciona`: una página de contenido propio con los dos flujos del
-  02 y la tesis del 01, indexable. `/seguridad` queda para recortes.
-- Fijar `APP_URL` al dominio de producción en Vercel antes de compartir
-  enlaces (09 §10): un alias de preview pide login y rompe la tarjeta.
+- ~~`metadata.tsx` del kit como `metadata` del `layout`: título `merit —
+  Crédito que se gana`, plantilla `%s — merit`, descripción de `site.ts`,
+  `metadataBase`, Open Graph y X con `og-image.png`, iconos, `manifest`,
+  `robots` indexable, canonical; `<html lang="es">`; `JsonLd`
+  (`WebApplication`, `FinanceApplication`).~~
+- ~~`/lending` y `/borrowing` con `privatePageRobots` (`noindex`, sin
+  `Disallow`); `sitemap.ts` con `/` y `/como-funciona`.~~
+- ~~`/como-funciona` como página de contenido indexable. `/seguridad` queda
+  para recortes.~~
+- Fijar `NEXT_PUBLIC_APP_URL` en Vercel al hostname del túnel antes de
+  compartir enlaces (09 §10).
 
-**Verificación:** `pnpm build` sin avisos; en el preview de Vercel del PR,
-Lighthouse da **SEO 100** y **Accesibilidad ≥ 95** en `/`, `/lending` y
-`/borrowing`; `view-source` de `/` muestra `<title>`, descripción,
-`og:image` absoluto, canonical y el JSON-LD en el HTML inicial; `/lending`
-y `/borrowing` llevan `noindex`; `/robots.txt`, `/sitemap.xml` y
-`/manifest.webmanifest` responden; la URL de producción pegada en WhatsApp
-y en un validador de Open Graph muestra la tarjeta; Rich Results Test sin
-errores; las siete pantallas del 04 §5 se recorren con los estados de
-ejemplo en 390 px y 1440 px. Captura de cada pantalla en el `CHANGELOG.md`
-(convención de evidencia para cambios de UI).
+**Verificación:** ~~`pnpm build` sin avisos; el HTML inicial de `/` trae
+`<title>`, descripción, `og:image` absoluto, canonical, `robots` y el
+JSON-LD, con un solo `h1`; `/lending` y `/borrowing` llevan `noindex`;
+`/robots.txt`, `/sitemap.xml`, `/manifest.webmanifest` y `/og-image.png`
+responden (comprobado con `next start` + `curl`, 2026-10-16).~~ Pendiente
+sobre el preview de Vercel del PR de la fase: Lighthouse **SEO 100** y
+**Accesibilidad ≥ 95** en `/`, `/lending` y `/borrowing`; la URL pegada en
+WhatsApp y en un validador de Open Graph muestra la tarjeta; Rich Results
+Test sin errores; las siete pantallas recorridas con `?state=` en 390 px y
+1440 px; captura de cada pantalla en el `CHANGELOG.md`.
 
 ---
 
