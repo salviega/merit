@@ -68,6 +68,14 @@ Evidence conventions — what makes an entry verifiable instead of a claim:
   the loan waiting, arriving, received and paid. Evidence on the test
   network pending the client credentials; see `07` Fase 3.
 
+### Fixed
+
+- `pnpm seed:history` could not run: the root `package.json` had no
+  `"type": "module"`, so `tsx` compiled the script as CommonJS and refused
+  its top-level `await`, and the root declared neither `@merit/core` nor
+  `@interledger/open-payments`, which the script imports. Found by running
+  a read-only credentials check from the root on 2026-10-17.
+
 ### Changed
 
 - `apps/cron` is now only the repayment service loop: the Express playground

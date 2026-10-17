@@ -11,9 +11,8 @@
 
 - **Dónde vive:** un solo monorepo pnpm, `merit/`, con `apps/web` (Next.js;
   la landing en Vercel y la app completa en la máquina de la demo tras un
-  Cloudflare Tunnel), `apps/cron` (hoy un Express de pruebas; termina siendo el
-  servicio de cobro) y `packages/core` (todavía no existe; lo crea la fase
-  2). El estado vive en `data/merit.json`, un archivo JSON con lock entre
+  Cloudflare Tunnel), `apps/cron` (el servicio de cobro) y `packages/core`
+  (almacén, cliente Open Payments, score y cuotas). El estado vive en `data/merit.json`, un archivo JSON con lock entre
   procesos (05 §1). `apps/api/fetch_wallet.js/` era un **PoC** de lectura
   de historial; la fase 2 lo absorbió en `packages/core` y lo borró.
 - **Punto de partida (2026-10-16):** repo con CI en pull requests, hook de
@@ -86,11 +85,18 @@ que dependa de él.
 - ~~PoC de lectura de historial en `apps/api/fetch_wallet.js/server.js`:
   grant interactivo de solo lectura, listado paginado de pagos entrantes y
   salientes, CSV y revocación.~~
-- **Compuerta `list-all`.** Correr el PoC con la billetera de Merit como
-  cliente y una billetera de prueba **distinta** como solicitante, que tenga
-  al menos tres pagos entrantes y uno saliente creados por fuera de Merit
-  (desde la interfaz de la billetera de prueba o desde el playground). Con
-  el grant aprobado, `GET /history` debe devolver esos pagos.
+- **Compuerta `list-all`.** Con la billetera de Merit como cliente y una
+  billetera de prueba **distinta** como solicitante, que tenga al menos tres
+  pagos entrantes y uno saliente creados por fuera de Merit, aprobar el grant
+  de lectura y comprobar que el historial vuelve con esos pagos. El PoC que
+  lo hacía se absorbió en `packages/core` (fase 2), así que hoy la compuerta
+  se cierra con el flujo real: `/borrowing` → **Analizar mis movimientos** →
+  aprobar → la `score_request` en `data/merit.json` queda `approved` con un
+  `monthlyIncome` > 0. Comprobación previa del 2026-10-17 con las
+  credenciales del `.env`: las cuatro billeteras resuelven, pero el pedido de
+  grant falla con `invalid signature` (la llave no corresponde al `KEY_ID`
+  registrado en la billetera de Merit); hay que regenerar la llave en
+  *Settings → Developer keys* y pegar `KEY_ID` y PEM juntos.
   - Si los devuelve: el score y el cobro leen el historial completo, tal
     como está en el 04 y el 05. Se anota en `spec/feedback/` qué devolvió
     el proveedor (campos, paginación, `expires_in` del token).
@@ -109,9 +115,10 @@ que dependa de él.
 - ~~`03_bounties.md`: decidido el 2026-10-16 que los bounties no son un
   motor del proyecto; se deja como plantilla y no se renumera.~~
 
-**Verificación:** `pnpm lint && pnpm typecheck && pnpm build` en limpio;
-`GET /history` del PoC devuelve pagos que Merit no creó, y el resultado
-(sí/no) queda escrito en esta sección con fecha. **Compuerta: 2026-10-17.**
+**Verificación:** ~~`pnpm lint && pnpm typecheck && pnpm build` en limpio
+(2026-10-16).~~ El historial leído con el grant devuelve pagos que Merit no
+creó, y el resultado (sí/no) queda escrito en esta sección con fecha.
+**Compuerta: pendiente de credenciales válidas.**
 
 ---
 
@@ -381,26 +388,32 @@ camino no produce cuotas repetidas.
 **Objetivo:** que un juez pueda entender, probar y verificar Merit sin que
 nadie se lo explique.
 
-- Reemplazar `README.md` por el contenido de `PROJECT_README.template.md`:
-  qué es, cómo correrlo (`.env`, `tunnel`, `dev`, `seed:history`),
-  variables, cómo probar con billeteras de prueba, arquitectura (el
-  diagrama del 05 §2) y los enlaces a la landing en Vercel y a la app.
-- Datos de demo: billeteras A (prestamista), B (solicitante con historial
-  sembrado) y C (quien le paga a B), con un guion de 3 minutos escrito en
-  `spec/demo.md` y ensayado dos veces.
+- ~~Reemplazar `README.md` por el README público: qué es, cómo corre (dos
+  modos: aprobar desde el mismo navegador con `APP_URL=http://localhost:3000`
+  o desde otro dispositivo con el túnel), `.env`, `dev:web`, `dev:cron`,
+  `seed:history`, arquitectura (el diagrama del 05 §2), evidencia (tests, un
+  PR por fase, la landing en Vercel) y la seguridad en un párrafo.
+  `PROJECT_README.template.md` y el README por defecto de `apps/web`
+  eliminados.~~
+- ~~Guion de la demo de 3 minutos en `spec/demo.md`: preparación, qué se
+  muestra y se dice con A, B y C, qué no se dice (09 §6) y el plan B con
+  `?state=`.~~ Ensayarlo dos veces con la red de prueba.
 - Video de la demo, si el hackathon lo pide.
-- Revisar `03_bounties.md`: cada requisito de cada track con su evidencia
-  (enlace al código o a la pantalla).
-- `spec/feedback/`: pasar en limpio lo anotado sobre la red de prueba y el
-  SDK durante las fases 0–4.
+- ~~`03_bounties.md`: queda como plantilla (decisión del 2026-10-16).~~
+- ~~`spec/feedback/01_interledger.md` en limpio: el padding del `hash`, el
+  tipo `PaginationArgs` y el mensaje `invalid signature`.~~
 - Versión al mergear a `main`, según la cadencia del `CHANGELOG.md`: minor,
   porque cierra una fase del plan.
-- `08_roadmap.md` con lo del 04 §7, lo que se recortó y el paso a Postgres
-  y a un hosting propio cuando la API y el cobro dejen de compartir disco.
+- ~~`08_roadmap.md` con lo del 04 §7, las decisiones de infraestructura del
+  05, las dos ventanas de inconsistencia conocidas, lo recortado, y el orden
+  propuesto: Postgres y host propio primero.~~
+- ~~`spec/README.md` con las decisiones tomadas y el estado real.~~
 
 **Verificación:** una persona ajena al equipo sigue el README en una
 máquina limpia y completa el guion de la demo sin preguntar nada; el
 despliegue de `main` en Vercel responde; Lighthouse SEO sigue en 100.
+**Pendiente:** depende del recorrido en vivo (credenciales válidas y una
+billetera prestamista en la moneda del solicitante).
 
 ---
 

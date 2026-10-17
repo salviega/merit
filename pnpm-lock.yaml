@@ -108,7 +108,17 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@interledger/open-payments':
+        specifier: ^7.4.0
+        version: 7.4.0(supports-color@7.2.0)
+      '@merit/core':
+        specifier: workspace:*
+        version: link:packages/core
     devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
