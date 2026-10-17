@@ -2,12 +2,13 @@
 
 ## Tools Used
 
-- **Claude Code** with **Claude Opus 5.5** (`claude-opus-5-5`), Anthropic's
-  agentic coding CLI: it reads the repo, runs commands, edits files, and
-  opens commits and pull requests when asked.
-
-<!-- TODO(David Mejia): add any tool you used for phases 0–5 that is not
-     listed here (for example Claude Code, Cursor, Copilot, ChatGPT). -->
+- **Claude Code**, Anthropic's agentic coding CLI: it reads the repo, runs
+  commands, edits files, and opens commits and pull requests when asked.
+  Both team members used it:
+  - Santiago Viana, with **Claude Opus 5.5** (`claude-opus-5-5`), as
+    recorded in the session logs: sections 1–3, 5 and 6.
+  - David Mejia, for the application code and its docs: section 4. His
+    model was not recorded.
 
 ## Where and How We Used AI
 
@@ -69,12 +70,20 @@ handlers), `apps/cron/src/**` (repayment loop), `scripts/`,
 `spec/definicion/07_plan-de-trabajo.md`, `08_roadmap.md`, `spec/demo.md`,
 `brand/`.
 
-<!-- TODO(David Mejia): these were committed from your machine (PRs #4–#10).
-     State which tool you used, for which of these files, and which ones
-     you wrote with little or no AI. Add your prompts as
-     prompts/04-*.md onwards. -->
-
-_To be completed by David Mejia._
+- David Mejia used Claude Code to write all of these, one phase per pull
+  request (#4–#10), following the work plan. The first piece was a PoC in
+  `apps/api` that read a wallet's history through a read-only grant (since
+  absorbed into `packages/core/src/open-payments/history.ts`).
+- The PR descriptions state that the tests were written before each module
+  and seen failing first (`repayment.test.ts`, `store.test.ts`,
+  `score.test.ts` and the rest), and that lint, typecheck, test and build
+  ran before each commit. They also record what was verified locally, and
+  what was not yet verified on the Interledger test network.
+- **The prompt log for these sessions was lost.**
+  [`prompts/04-phases-0-5-reconstructed.md`](./prompts/04-phases-0-5-reconstructed.md)
+  rebuilds, phase by phase, what Claude Code was asked to do and what it
+  produced. It comes from the commit messages and PR descriptions written
+  during those sessions. It is a reconstruction, not a verbatim log.
 
 ### 5. Documentation — `README.md`
 
@@ -98,8 +107,7 @@ Prompts: [`prompts/03-setup-spec-readme.md`](./prompts/03-setup-spec-readme.md) 
   behind its sources (`spec/definicion/01` and `02`).
 - **Product decisions:** the flow in section 3, the choice of Interledger
   Open Payments, and the merge decisions on each PR.
-
-<!-- TODO(David Mejia): list the files you wrote with little or no AI. -->
+- **Code:** no file in `apps/` or `packages/` was written without AI.
 
 ## What We Did Ourselves
 
@@ -108,11 +116,13 @@ Prompts: [`prompts/03-setup-spec-readme.md`](./prompts/03-setup-spec-readme.md) 
 
 ## Prompt Log
 
-Every prompt is in [`prompts/`](./prompts/), copied verbatim from the Claude
-Code session history:
+The prompts are in [`prompts/`](./prompts/). Files 01–03 are copied verbatim
+from the Claude Code session history. File 04 is a reconstruction, because
+that history was lost:
 
-| File | Session |
-| ---- | ------- |
-| [`01-bootstrap-starter-kit.md`](./prompts/01-bootstrap-starter-kit.md) | Repository bootstrap from the starter kit |
-| [`02-interledger-playground.md`](./prompts/02-interledger-playground.md) | First Open Payments playground (PR #1) |
-| [`03-setup-spec-readme.md`](./prompts/03-setup-spec-readme.md) | Setup, CI and Vercel; spec 01–06; README; this disclosure |
+| File | Session | Kind |
+| ---- | ------- | ---- |
+| [`01-bootstrap-starter-kit.md`](./prompts/01-bootstrap-starter-kit.md) | Repository bootstrap from the starter kit | Verbatim |
+| [`02-interledger-playground.md`](./prompts/02-interledger-playground.md) | First Open Payments playground (PR #1) | Verbatim |
+| [`03-setup-spec-readme.md`](./prompts/03-setup-spec-readme.md) | Setup, CI and Vercel; spec 01–06; README; this disclosure | Verbatim |
+| [`04-phases-0-5-reconstructed.md`](./prompts/04-phases-0-5-reconstructed.md) | PoC, work plan and phases 0–5 (PRs #4–#10) | Reconstructed from commits and PRs |
