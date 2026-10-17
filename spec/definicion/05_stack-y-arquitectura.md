@@ -12,7 +12,7 @@
 | Protocolo de pagos | Open Payments sobre Interledger, con el SDK `@interledger/open-payments` | Custodiar fondos en una cuenta de Merit | Es lo que permite mover dinero entre billeteras de distintos proveedores sin que pase por Merit (04 §1.1). |
 | Red de prueba | Billeteras de `wallet.interledger-test.dev` | Montar un Rafiki local | Es la red de prueba pública de Interledger, con proveedor, IdP para aprobar grants y llaves de cliente listas. |
 | Dónde viven los endpoints | Route handlers de Next.js en `apps/web`, corriendo en la máquina de la demo | El Express actual de `apps/cron`; desplegar la API en Vercel | La API y el servicio de cobro comparten un archivo JSON, así que tienen que correr en la misma máquina. Vercel solo sirve la landing y el SEO. |
-| URL pública de la API | Túnel ngrok con dominio fijo hacia `localhost:3000` | cloudflared (URL distinta en cada arranque) | Los callbacks de los grants necesitan una URL pública; con dominio fijo `APP_URL` se configura una vez. |
+| URL pública de la API | Cloudflare Tunnel con nombre (hostname fijo en un dominio propio en Cloudflare) hacia `localhost:3000` | ngrok (dominio fijo del plan gratuito); túnel rápido de cloudflared (URL distinta en cada arranque) | Los callbacks de los grants necesitan una URL pública; con hostname fijo `APP_URL` se configura una vez. |
 | Servicio de cobro | Proceso Node de larga duración en `apps/cron`, con un ciclo cada 5 s | Vercel Cron | Vercel Cron corre como mínimo cada minuto; el cobro cada 5 s necesita un proceso vivo. |
 | Base de datos | Un archivo JSON local (`data/merit.json`) con lock entre procesos y escritura atómica | Postgres en Neon, SQLite | Todo corre en una máquina durante el hackathon y no hay servicio que mantener. El lock de archivo y la escritura atómica dan la exclusión mutua que el cobro necesita; se acepta el riesgo de que la demo dependa de esa máquina. |
 | Acceso a datos | Almacén propio en `packages/core/db`: esquema `zod` del documento y `withTransaction()` sobre `proper-lockfile` + `write-file-atomic` | Un ORM | El documento entero se valida al leer y al escribir, y cada mutación ocurre bajo un lock que las dos apps respetan. |
@@ -28,7 +28,7 @@
  Navegador ──► Vercel: apps/web solo landing y SEO (/, /como-funciona)
      │              └─ botones "Aportar liquidez" / "Pedir préstamo" → APP_URL
      ▼
- ngrok (dominio fijo) ──► apps/web (Next.js en la máquina de la demo)
+ Cloudflare Tunnel (hostname fijo) ──► apps/web (Next.js en la máquina de la demo)
                             ├─ páginas: lending, borrowing
                             └─ /api/*: grants, callbacks, score, desembolso
                                    │              │
@@ -226,7 +226,7 @@ el grant.
 | Concepto | Costo | Nota |
 | -------- | ----- | ---- |
 | Vercel (landing) | Gratis | Plan Hobby. |
-| ngrok | Gratis | Plan gratuito con un dominio fijo. |
+| Cloudflare Tunnel | Gratis | Túnel con nombre; necesita un dominio en Cloudflare. |
 | Red de prueba de Interledger | Gratis | Dinero de prueba. |
 | API y servicio de cobro | Gratis | En el MVP corren en una máquina propia, con el archivo JSON al lado. |
 
@@ -241,7 +241,7 @@ el grant.
 | Los tokens vencen (`expires_in`) | El cobro y el desembolso fallan con un token viejo. | Rotar con `manage_url` antes de cada uso; probar con un token de verdad vencido. |
 | El listado sin filtro de fecha crece | Cada ciclo de 5 s lee más páginas y se acerca a límites de tasa. | Paginar solo hasta llegar a pagos anteriores a `disbursed_at`; guardar el último cursor visto. |
 | Comisiones en la cotización | `debitAmount` sale mayor que el principal y el cupo no alcanza. | Reservar con el `debitAmount` de la cotización, no con el principal. |
-| La demo depende de una máquina encendida y del túnel | Si la laptop se apaga o ngrok cae, los callbacks no llegan y el cobro se detiene. | Asumido: la demo se hace con la máquina delante. Vercel sigue sirviendo la landing. Postgres queda en el roadmap para cuando la API deje de correr en una máquina. |
+| La demo depende de una máquina encendida y del túnel | Si la laptop se apaga o el túnel cae, los callbacks no llegan y el cobro se detiene. | Asumido: la demo se hace con la máquina delante. Vercel sigue sirviendo la landing. Postgres queda en el roadmap para cuando la API deje de correr en una máquina. |
 | Dos procesos escriben el mismo archivo JSON | Sin exclusión mutua, una escritura pisa a la otra y se pierde una cuota o se cobra dos veces. | Todo escribe por `withTransaction()` (lock de archivo + escritura atómica) y hay un test con dos procesos reales. |
 | Ingresos que no pasan por Open Payments (depósitos, recargas) | No aparecen en el listado: ni suman al score ni se cobran. | Asumido y escrito en el 04 §8; la demo usa pagos entre billeteras. |
 

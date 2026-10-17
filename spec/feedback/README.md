@@ -24,7 +24,7 @@ No es una queja unilateral: cada archivo abre con lo que funcionó bien.
 
 | Sponsor | Archivo |
 | ------- | ------- |
-| _[Sponsor 1]_ | [01_sponsor-example.md](./01_sponsor-example.md) — duplícalo y renombra |
+| Interledger Foundation (Open Payments) | [01_interledger.md](./01_interledger.md) |
 
 ## Cómo se usa cada archivo
 
