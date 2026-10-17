@@ -47,6 +47,29 @@ proveedor de prueba.
 
 **Reportado:** pendiente.
 
+### 2026-10-17 — `invalid signature` no dice qué llave ni qué billetera
+
+**Documentado / prometido:** el cliente autenticado firma cada pedido con
+la llave privada y el `keyId` registrados en la billetera del cliente; el
+error de firma debería permitir saber cuál de los dos no coincide.
+
+**Encontrado:** con una llave PEM válida (Ed25519, PKCS#8) y un `KEY_ID`
+que no le corresponde, `client.grant.request()` falla con `Error making
+Open Payments POST request` y `description: "invalid signature"`, sin decir
+qué `keyId` se buscó, en qué billetera, ni si el JWKS se pudo leer. Las
+lecturas públicas (`walletAddress.get`) funcionan igual, así que el fallo
+solo aparece al primer `POST`.
+
+**Evidencia:** comprobación de solo lectura del 2026-10-17 desde la raíz
+del repo con las credenciales del `.env` (billetera de Merit
+`https://ilp.interledger-test.dev/e1f3ab6d`).
+
+**Impacto en el proyecto:** media hora para descartar la codificación
+base64 del PEM antes de concluir que el `KEY_ID` no corresponde. Una nota
+para la guía de errores del SDK.
+
+**Reportado:** pendiente.
+
 ### 2026-10-16 — `PaginationArgs` exige `wallet-address` aunque `list()` ya lo recibe
 
 **Documentado / prometido:** `client.incomingPayment.list(args, pagination)`
