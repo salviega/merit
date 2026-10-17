@@ -67,6 +67,55 @@ provider; merit only ever receives tokens scoped and capped by them.
                   (auth server: grants · resource server: payments, quotes)
 ```
 
+## Repository layout
+
+```
+merit/
+├─ apps/
+│  ├─ web/            Next.js: landing, /lending, /borrowing and the /api route handlers
+│  └─ cron/           the repayment service: one cycle every 5 s, no HTTP
+├─ packages/
+│  └─ core/           shared by both apps, and where the tests live
+│     ├─ db/          the JSON store (file lock, atomic writes) and its schema
+│     ├─ open-payments/  client, grants, interaction hash, history, payments, token rotation
+│     ├─ score.ts     history → score and offer
+│     ├─ lending.ts   quota reservation and loan creation
+│     └─ repayment.ts incoming payments → installments
+├─ scripts/           seed-history.ts (demo history), tunnel.mjs (Cloudflare Tunnel)
+├─ brand/             logo, lockups, tokens and the Open Graph image
+└─ spec/              the specification (Spanish), demo script and sponsor feedback
+```
+
+## Stack
+
+| Layer | Choice |
+| ----- | ------ |
+| Payments | Interledger Open Payments through `@interledger/open-payments` 7.4 |
+| Web and API | Next.js 16 (App Router, route handlers), React 19, Tailwind CSS 4 |
+| Repayment service | Node 22, run with `tsx` |
+| State | One JSON file (`DATA_FILE`) shared by both apps, behind a file lock |
+| Validation | Zod 4 |
+| Tests | Vitest 5 with V8 coverage, floor enforced in `vitest.config.ts` |
+| Hosting | Vercel for the landing; the app runs on the demo machine behind Cloudflare Tunnel |
+| CI | GitHub Actions on every pull request: lint, typecheck, test, build |
+
+## API
+
+All routes live in `apps/web/src/app/api`. The browser only ever gets back a
+redirect URL or a summary of its own row; tokens stay on the server.
+
+| Route | Method | What it does |
+| ----- | ------ | ------------ |
+| `/api/lenders` | `POST` | Starts the lender's quota grant (`outgoing-payment`, capped at the quota) and returns the provider's redirect URL. |
+| `/api/lenders` | `GET` | The quota tied to this browser's cookie. |
+| `/api/callbacks/lender` | `GET` | Provider redirect: verifies the hash, continues the grant, activates the quota. |
+| `/api/score` | `POST` | Starts the borrower's read-only history grant and returns the redirect URL. |
+| `/api/score` | `GET` | Status of this browser's score request (`pending_grant`, `analyzing`, `approved` with the offer, `rejected`, `expired`). |
+| `/api/callbacks/score` | `GET` | Provider redirect: verifies the hash, continues the grant, reads 90 days of history and computes the score and offer. |
+| `/api/loans` | `POST` | Reserves a lender's quota for the chosen amount and starts the repayment grant, capped at `principal + interest`. |
+| `/api/loans` | `GET` | The loan tied to this browser: amount, total due, repaid so far. |
+| `/api/callbacks/loan` | `GET` | Provider redirect: verifies the hash, continues the grant and disburses from the lender to the borrower. |
+
 ## How to run
 
 Prerequisites: Node 22, pnpm 12 through corepack (`corepack enable`), and
@@ -110,6 +159,35 @@ in `data/merit.json`; tokens are stored there and never leave the machine.
 Every screen can also be reviewed without a wallet: `/lending?state=active`,
 `/borrowing?state=offer`, and so on, show each state from example data.
 
+### Configuration
+
+One `.env` at the repository root serves every app; `.env.example` explains
+each key inline.
+
+| Variable | Used by | Notes |
+| -------- | ------- | ----- |
+| `OPEN_PAYMENTS_WALLET_ADDRESS` | web, cron, scripts | merit's own wallet address on the test network. |
+| `OPEN_PAYMENTS_KEY_ID` | web, cron, scripts | Id of the developer key registered on that wallet. |
+| `OPEN_PAYMENTS_PRIVATE_KEY` | web, cron, scripts | **Secret.** The PEM, base64 in one line. |
+| `APP_URL` | web | Public base URL of the app; the grants' `interact.finish` callbacks point here. |
+| `NEXT_PUBLIC_APP_URL` | web (Vercel) | Set only on Vercel, so the landing's buttons open the app. Empty locally. |
+| `SESSION_SECRET` | web | **Secret.** Signs the `httpOnly` cookies. |
+| `DATA_FILE` | web, cron | The JSON store, relative to the repo root. Default `./data/merit.json`. |
+| `CRON_INTERVAL_MS` | cron | Repayment cycle. Default `5000`. |
+| `CLOUDFLARE_TUNNEL_TOKEN`, `TUNNEL_HOSTNAME` | `pnpm tunnel` | Named tunnel with a fixed hostname; leave the token empty for a quick tunnel. |
+| `SEED_LENDER_WALLET`, `SEED_BORROWER_WALLET`, `SEED_PAYER_WALLET` | `pnpm seed:history`, demo | The three test wallets: A lends, B borrows, C pays B. |
+
+### Scripts
+
+| Script | What it does |
+| ------ | ------------ |
+| `pnpm dev` | Web and repayment service together. |
+| `pnpm dev:web` / `pnpm dev:cron` | One of them. |
+| `pnpm test` | The `packages/core` tests with coverage; fails under the floor. |
+| `pnpm lint` / `pnpm typecheck` / `pnpm build` | The rest of the CI checks, across the monorepo. |
+| `pnpm seed:history` | Pays the borrower wallet several times from the payer so it has history to score. |
+| `pnpm tunnel` | Exposes `localhost:3000` through Cloudflare Tunnel. |
+
 ## Evidence
 
 - **Tests:** `pnpm test` runs 75 tests in `packages/core` with a coverage
@@ -123,7 +201,9 @@ Every screen can also be reviewed without a wallet: `/lending?state=active`,
   [#6](https://github.com/salviega/merit/pull/6) brand and SEO,
   [#7](https://github.com/salviega/merit/pull/7) store, score and history,
   [#8](https://github.com/salviega/merit/pull/8) quotas, loans and
-  disbursement, [#9](https://github.com/salviega/merit/pull/9) repayment.
+  disbursement, [#9](https://github.com/salviega/merit/pull/9) repayment,
+  [#10](https://github.com/salviega/merit/pull/10) README, demo script and
+  roadmap.
 - **Live landing:** <https://merit-ten-rust.vercel.app> with the Open Graph
   card, `robots.txt`, `sitemap.xml` and JSON-LD.
 - **Test network:** payment and grant URLs from the live run go into
