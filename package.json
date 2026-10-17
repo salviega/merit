@@ -1,6 +1,7 @@
 {
   "name": "merit",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=22"
@@ -16,7 +17,12 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r --if-present test"
   },
+  "dependencies": {
+    "@interledger/open-payments": "^7.4.0",
+    "@merit/core": "workspace:*"
+  },
   "devDependencies": {
+    "@types/node": "^26.6.5",
     "tsx": "^4.23.15"
   }
 }
