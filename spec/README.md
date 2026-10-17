@@ -54,7 +54,19 @@ Documentos, en orden. Cada uno asume el anterior.
      "usamos X o Y" ya se decidió. Actualízala cuando una decisión grande se
      cierre; no dupliques el detalle, que vive en el documento correspondiente. -->
 
-- _Por definir._
+- Identidad = _wallet address_; autorización = grant aprobado en el proveedor.
+  Sin cuentas ni login (04 §8).
+- El dinero nunca pasa por Merit; cada movimiento tiene un tope que pone el
+  dueño de la billetera (`limits.debitAmount`) (04 §1).
+- Un préstamo, un prestamista, una moneda; interés fijo sobre el capital;
+  cobro como 20 % de cada ingreso (04 §8, 05 §6).
+- Estado en un archivo JSON local con lock entre procesos; la API y el cobro
+  corren en la máquina de la demo detrás de un túnel; Vercel sirve solo la
+  landing (05 §1, decidido el 2026-10-16).
+- Marca y textos del 09: minúsculas, "Aportar liquidez" / "Pedir préstamo",
+  tema oscuro, español con tuteo.
+- Los bounties del hackathon no son un motor del proyecto; el 03 queda como
+  plantilla.
 
 ---
 
@@ -77,4 +89,10 @@ mientras se avanza, no al final.
      proyecto (enlaza a la fase activa del 07), y qué pendiente bloquea algo
      si lo hay. -->
 
-**Documentación:** _por definir._ **Construcción:** _por definir._
+**Documentación:** los nueve documentos escritos; el 07 es la traza.
+**Construcción:** las seis fases del [07](./definicion/07_plan-de-trabajo.md)
+construidas y verificadas en local (75 tests, lint, typecheck, build); queda
+el recorrido en vivo sobre la red de prueba con aprobaciones reales, descrito
+en la *Verificación* de cada fase y en el [guion de la demo](./demo.md).
+**Bloquea:** credenciales del cliente Open Payments válidas y una billetera
+prestamista en la misma moneda que la del solicitante.
