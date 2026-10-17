@@ -73,7 +73,7 @@ son tres campos en total.
 | Servicio | Plan | Para qué |
 | -------- | ---- | -------- |
 | Vercel | Hobby | Hospeda la landing y el SEO de `apps/web` (`/`, `/como-funciona`); sus botones enlazan a `APP_URL`. Despliega `main` a producción. |
-| ngrok | Gratis | Túnel con dominio fijo hacia el `apps/web` local: la URL pública de las páginas de la app y de los callbacks. |
+| Cloudflare Tunnel (`cloudflared`) | Gratis | Túnel con nombre y hostname fijo hacia el `apps/web` local: la URL pública de las páginas de la app y de los callbacks. Necesita un dominio en Cloudflare. |
 | Interledger test wallet (`wallet.interledger-test.dev`) | Gratis | Billeteras de prueba de prestamistas, solicitantes y de Merit, y la llave del cliente. |
 | GitHub | Gratis | Repositorio y CI. |
 
@@ -87,9 +87,9 @@ son tres campos en total.
 | `OPEN_PAYMENTS_WALLET_ADDRESS` | web, cron | _Wallet address_ del cliente Merit. |
 | `OPEN_PAYMENTS_KEY_ID` | web, cron | Id de la llave del cliente en la billetera de prueba. |
 | `OPEN_PAYMENTS_PRIVATE_KEY` | web, cron | **Secreta.** PEM en base64. Reemplaza a `OPEN_PAYMENTS_PRIVATE_KEY_PATH`. |
-| `APP_URL` | web | URL pública del `apps/web` local (el dominio de ngrok): base de los `interact.finish` de los grants y de los enlaces. |
-| `NEXT_PUBLIC_APP_URL` | web (Vercel) | El mismo dominio de ngrok, para que los botones de la landing en Vercel lleven a la app. Vacío en local. |
-| `NGROK_AUTHTOKEN`, `NGROK_DOMAIN` | script `tunnel` | **Secreto** el primero. Dominio fijo del plan gratuito de ngrok. |
+| `APP_URL` | web | URL pública del `apps/web` local (el hostname del túnel): base de los `interact.finish` de los grants y de los enlaces. |
+| `NEXT_PUBLIC_APP_URL` | web (Vercel) | El mismo hostname del túnel, para que los botones de la landing en Vercel lleven a la app. Vacío en local. |
+| `CLOUDFLARE_TUNNEL_TOKEN`, `TUNNEL_HOSTNAME` | script `tunnel` | **Secreto** el primero. Token del túnel con nombre y el hostname público enrutado a `localhost:3000`. Sin token, `tunnel` abre un túnel rápido con URL distinta en cada arranque. |
 | `SEED_LENDER_WALLET`, `SEED_BORROWER_WALLET`, `SEED_PAYER_WALLET` | script `seed:history` | Billeteras de prueba A, B y C. |
 | `SESSION_SECRET` | web | **Secreta.** Firma la cookie de la solicitud de score. |
 | `CRON_INTERVAL_MS` | cron | 5000 por defecto. |
@@ -106,7 +106,7 @@ son tres campos en total.
 | `lint` | Lint de todo el monorepo. |
 | `typecheck` | Chequeo de tipos de todo el monorepo. |
 | `test` | Corre Vitest con cobertura; el mismo comando falla si no se cumple el umbral. |
-| `tunnel` | Abre el túnel de ngrok con el dominio fijo hacia `localhost:3000`. |
+| `tunnel` | Corre `cloudflared tunnel run` con el token del túnel con nombre hacia `localhost:3000`. |
 | `seed:history` | Siembra historial de pagos entre billeteras de prueba para la demo. |
 
 ---
@@ -119,7 +119,7 @@ son tres campos en total.
 | Vercel Cron | Proceso Node con ciclo de 5 s | Vercel Cron no baja de un minuto. |
 | Prisma, Drizzle | Almacén JSON propio | Sin ORM que mantener; el esquema es un `zod` del documento completo. |
 | Postgres (Neon), SQLite | Archivo JSON con lock | La API y el cobro corren en la misma máquina durante el hackathon; un lock de archivo y escritura atómica bastan para la exclusión mutua, sin servicio que mantener. Postgres vuelve cuando dejen de compartir disco (08). |
-| API en Vercel | API en la máquina de la demo tras ngrok | Vercel no puede compartir el archivo con el servicio de cobro; se queda con la landing. |
+| API en Vercel | API en la máquina de la demo tras Cloudflare Tunnel | Vercel no puede compartir el archivo con el servicio de cobro; se queda con la landing. |
 | Llave en archivo (`private.key`) | Variable de entorno | En Vercel no hay archivo. |
 | Rafiki local | Red de prueba de Interledger | Menos infraestructura, y es la red con la que se va a hacer la demo. |
 

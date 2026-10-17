@@ -9,8 +9,10 @@
     "dev": "pnpm --parallel -r dev",
     "dev:web": "pnpm --filter web dev",
     "dev:cron": "pnpm --filter cron dev",
+    "tunnel": "node scripts/tunnel.mjs",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --if-present test"
   }
 }

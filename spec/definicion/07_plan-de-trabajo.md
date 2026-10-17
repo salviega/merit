@@ -11,7 +11,7 @@
 
 - **Dónde vive:** un solo monorepo pnpm, `merit/`, con `apps/web` (Next.js;
   la landing en Vercel y la app completa en la máquina de la demo tras un
-  túnel ngrok), `apps/cron` (hoy un Express de pruebas; termina siendo el
+  Cloudflare Tunnel), `apps/cron` (hoy un Express de pruebas; termina siendo el
   servicio de cobro) y `packages/core` (todavía no existe; lo crea la fase
   2). El estado vive en `data/merit.json`, un archivo JSON con lock entre
   procesos (05 §1). `apps/api/fetch_wallet.js/` es un **PoC** de lectura de historial que
@@ -97,16 +97,17 @@ que dependa de él.
   - Si no los devuelve (solo lo que Merit creó, o el grant se rechaza): se
     activa el plan B del 05 §10 el mismo día y se corrige el 04 §4.2, el
     05 §6 y este documento antes de la fase 2.
-- Variables de entorno acordadas en el 06 §8 en un `.env.example` en la
-  raíz, y un `.env` (ignorado) con todas las claves vacías para llenar;
-  `OPEN_PAYMENTS_PRIVATE_KEY` reemplaza al archivo. Script `tunnel` para
-  ngrok.
-- `AGENTS.md`: reemplazar los `[ADAPT]` por los comandos reales (`pnpm
-  test`, `pnpm typecheck`, `pnpm lint`) y nombrar como test crítico
-  "repayment never exceeds total_due and never charges an incoming payment
-  twice".
-- `03_bounties.md`: confirmar si el hackathon tiene bounties. Si los tiene,
-  llenarlo; si no, borrarlo y renumerar.
+- ~~Variables de entorno del 06 §8 en un `.env.example` en la raíz, y un
+  `.env` (ignorado) con todas las claves para llenar; las dos apps leen el
+  `.env` raíz; `OPEN_PAYMENTS_PRIVATE_KEY` reemplaza al archivo. Script
+  `tunnel` para el Cloudflare Tunnel.~~
+- ~~`AGENTS.md` sin `[ADAPT]`: comandos reales (`pnpm test`, `pnpm
+  typecheck`, `pnpm lint`), el test crítico "repayment never exceeds
+  total_due and never charges an incoming payment twice", seguridad y
+  convenciones del stack. Plantilla de PR, `.gitignore` y `CHANGELOG.md`
+  adaptados; `spec/feedback/01_interledger.md` creado.~~
+- ~~`03_bounties.md`: decidido el 2026-10-16 que los bounties no son un
+  motor del proyecto; se deja como plantilla y no se renumera.~~
 
 **Verificación:** `pnpm lint && pnpm typecheck && pnpm build` en limpio;
 `GET /history` del PoC devuelve pagos que Merit no creó, y el resultado
@@ -129,14 +130,12 @@ un color ni un texto.
 
 **Integrar el kit:**
 
-- Mover el contenido de `merit-brand-kit/` (ya descomprimido en la raíz) a
-  su sitio, y borrar la carpeta y el zip:
-  `brand/` a la raíz (logos, `tokens.json`, fuentes, `generate.py`,
-  `render.js`), `apps/web/public/` (favicon, iconos, `og-image.png`),
+- ~~`brand/` en la raíz (logos, `tokens.json`, fuentes, `generate.py`,
+  `render.js`) y `spec/definicion/09_marca-y-seo.md`.~~ Falta la parte web
+  del kit: `apps/web/public/` (favicon, iconos, `og-image.png`),
   `apps/web/src/lib/site.ts` y `apps/web/src/app/` (`globals.css`,
   `layout.tsx`, `metadata.tsx`, `manifest.ts`, `robots.ts`, `sitemap.ts`).
-- Mover `spec/09_marca-y-seo.md` a `spec/definicion/09_marca-y-seo.md`,
-  añadirlo al índice de `spec/README.md` y corregir su "Depende de" (hoy
+- Añadir el `09_marca-y-seo.md` al índice de `spec/README.md` y corregir su "Depende de" (hoy
   apunta a un paquete de handoff que no existe en este repo; depende del
   [02](./02_solucion.md) y del [04](./04_diseno-de-solucion.md)).
 - **Reconciliar el 09 con el 04 y el 05**, en el mismo PR, porque el kit
@@ -441,5 +440,5 @@ Se corta desde atrás, en este orden:
 | El listado de pagos entrantes crece y el ciclo de 5 s toca límites de tasa | 2026-10-26, con el servicio corriendo horas | Paginar solo hasta `disbursed_at` y guardar el último cursor visto por préstamo. |
 | Lighthouse no llega a SEO 100 por algo del hosting (headers, redirecciones) | 2026-10-19, en el preview del PR de la fase 1 | Se corrige en `next.config.ts` o en Vercel; si no es corregible, se documenta la causa en el CHANGELOG con la captura. |
 | Dos personas tocando `packages/core` a la vez | Durante la fase 2 | Una persona en `score.ts`/API, la otra en `db/` y `open-payments/`; se mergea por PR pequeños cada día. |
-| La demo depende de la laptop encendida y de ngrok | En cada ensayo de la fase 5 | Ensayar con el túnel levantado desde cero; la landing en Vercel sigue viva aunque la app no. |
+| La demo depende de la laptop encendida y del túnel | En cada ensayo de la fase 5 | Ensayar con el túnel levantado desde cero; la landing en Vercel sigue viva aunque la app no. |
 | Dos procesos escriben `data/merit.json` a la vez | 2026-10-21, test de dos procesos del almacén | Si el lock falla en macOS, se cambia a un único proceso con el ciclo dentro de Next.js (`instrumentation.ts`). |
