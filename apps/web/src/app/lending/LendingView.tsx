@@ -27,7 +27,8 @@ const labels = {
 };
 
 export function LendingView() {
-  const state = useExampleState(states, "form");
+  // The real quota flow arrives with phase 3; until then the form is the default.
+  const state = useExampleState(states) ?? "form";
   return (
     <>
       <header className="flex flex-col gap-3">
