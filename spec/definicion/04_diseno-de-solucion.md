@@ -106,10 +106,10 @@ Payments), nunca como decimales.
 
 ### 4.1 Prestamista: poner un cupo
 
-1. En el home, da click en **Lending**.
+1. En el home, da click en **Aportar liquidez** (el camino "Lending").
 2. En la página de Lending escribe su _wallet address_ y el cupo, en la
    moneda de su billetera.
-3. Da click en **Autorizar cupo**. Merit pide un grant de
+3. Da click en **Enviar y autorizar en mi wallet**. Merit pide un grant de
    `outgoing-payment` con `debitAmount` igual al cupo y lo redirige a su
    proveedor.
 4. En su proveedor ve el monto y aprueba.
@@ -119,9 +119,9 @@ Payments), nunca como decimales.
 
 ### 4.2 Solicitante: score y oferta
 
-1. En el home, da click en **Borrowing**. Se abre el widget de préstamo.
-   El formulario de monto está **bloqueado**.
-2. Escribe su _wallet address_ y da click en **Analizar**.
+1. En el home, da click en **Pedir préstamo** (el camino "Borrowing"). Se
+   abre el widget de préstamo. El formulario de monto está **bloqueado**.
+2. Escribe su _wallet address_ y da click en **Analizar mis movimientos**.
 3. Merit pide un grant de lectura de su historial (`incoming-payment` y
    `outgoing-payment` con `list-all`/`read-all`) y lo redirige a su
    proveedor.
@@ -138,7 +138,8 @@ Payments), nunca como decimales.
 
 1. Elige el monto (≤ máximo) y ve el total a pagar y el porcentaje que se
    descuenta de cada ingreso.
-2. Da click en **Tomar préstamo**. Merit reserva un cupo de prestamista que
+2. Da click en **Pedir $X** (el botón lleva el monto elegido). Merit
+   reserva un cupo de prestamista que
    alcance, pide un grant de `outgoing-payment` sobre la billetera del
    solicitante con `debitAmount = principal + interés`, y lo redirige a su
    proveedor.
@@ -171,13 +172,16 @@ Payments), nunca como decimales.
 
 | Pantalla | Qué muestra | Acción principal |
 | -------- | ----------- | ---------------- |
-| **Home** | Qué es Merit, en una línea. | **Lending** o **Borrowing** (dos caminos, uno por actor). |
-| **Lending** | Formulario: _wallet address_ y cupo. | **Autorizar cupo** → proveedor. |
-| **Cupo activo** | Cupo, disponible y comprometido. | Volver al home. |
-| **Borrowing (widget)** | _Wallet address_ y formulario de monto bloqueado. | **Analizar** → proveedor. |
+| **Home** | Qué es Merit, en una línea. | **Aportar liquidez** o **Pedir préstamo** (dos caminos, uno por actor; "Lending" y "Borrowing" solo como etiqueta). |
+| **Lending** | Formulario: _wallet address_ y cupo, con la tarjeta de autorización (09 §7). | **Enviar y autorizar en mi wallet** → proveedor. |
+| **Cupo activo** | Cupo, disponible y comprometido. | Volver al inicio. |
+| **Borrowing (widget)** | _Wallet address_ y formulario de monto bloqueado. | **Analizar mis movimientos** → proveedor. |
 | **Analizando** | Estado de carga mientras se calcula el score. | — (espera). |
-| **Oferta** | Score, monto máximo, tasa, interés máximo; formulario desbloqueado. | **Tomar préstamo** → proveedor. |
-| **Préstamo recibido** | Monto recibido, total a pagar, porcentaje por ingreso, lo pagado. | Volver al home. |
+| **Oferta** | Score con banda, monto máximo, tasa, interés máximo; formulario desbloqueado. | **Pedir $X** → proveedor. |
+| **Préstamo recibido** | Monto recibido, total a pagar, porcentaje por ingreso, lo pagado. | Volver al inicio. |
+
+Los textos de los botones y los estados de cada pantalla siguen el
+[09](./09_marca-y-seo.md) §6–§7.
 
 ---
 

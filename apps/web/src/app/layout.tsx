@@ -1,29 +1,45 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { ReactNode } from "react";
+import { DM_Sans, JetBrains_Mono, Outfit } from "next/font/google";
 import "./globals.css";
+import { JsonLd, metadata, viewport } from "./metadata";
+import { SiteFooter } from "@/components/SiteFooter";
+import { SiteHeader } from "@/components/SiteHeader";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+export { metadata, viewport };
+
+const outfit = Outfit({
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "Merit — Interledger playground",
-  description: "Interledger Open Payments test bench",
-};
-
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="es"
+      className={`${outfit.variable} ${dmSans.variable} ${mono.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head>
+        <JsonLd />
+      </head>
+      <body className="flex min-h-full flex-col bg-noche text-hueso">
+        <SiteHeader />
+        <div className="flex-1">{children}</div>
+        <SiteFooter />
+      </body>
     </html>
   );
 }

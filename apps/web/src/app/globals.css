@@ -1,26 +1,104 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* merit — design tokens (spec/definicion/09_marca-y-seo.md §3–§4).
+   Fonts arrive through next/font as CSS variables (see layout.tsx). */
+@theme {
+  --color-noche: #0a0a0f;
+  --color-grafito: #15151d;
+  --color-linea: #26262f;
+  --color-linea-fuerte: #3a3a46;
+  --color-divisor: #1e1e26;
+  --color-hueso: #f5f5f7;
+  --color-niebla: #a1a1ae;
+  --color-deshabilitado: #8a8a96;
+  --color-merito: #6e4bff;
+  --color-lavanda: #a898ff;
+  --color-senal: #c6f432;
+  --color-ambar: #ffb547;
+  --color-coral: #ff5c7a;
+  --color-papel: #f6f5f1;
+
+  --font-display: var(--font-outfit), sans-serif;
+  --font-sans: var(--font-dm-sans), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+
+  --radius-control: 14px;
+  --radius-card: 24px;
+  --radius-card-sm: 18px;
+  --radius-chip: 8px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-noche);
+  color: var(--color-hueso);
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-lavanda);
+}
+
+a:hover {
+  color: var(--color-senal);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-merito);
+  outline-offset: 2px;
+}
+
+/* Wordmark as text, when the SVG is not used. The dot is the merit dot. */
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  line-height: 0.9;
+  text-transform: lowercase;
+}
+
+.wordmark::after {
+  content: "";
+  display: inline-block;
+  width: 0.17em;
+  height: 0.17em;
+  margin-left: 0.04em;
+  border-radius: 50%;
+  background: var(--color-senal);
+}
+
+/* Figures: always tabular. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Label: 12px, uppercase, tracked (09 §4). */
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@keyframes pulse-soft {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.skeleton {
+  background: var(--color-linea);
+  border-radius: var(--radius-chip);
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
 }

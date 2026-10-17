@@ -1,10 +1,4 @@
-# [ADAPTAR] Genérico para varios stacks — borra las secciones que no
-# apliquen a tu proyecto y ajusta las que sí. El de Moor terminó siendo más
-# específico que esto (rutas de packages/, qué carpeta de Foundry sí se
-# versiona para dejar evidencia de despliegue) — vuelve a mirarlo como
-# ejemplo real una vez decidas el stack en el 06_tecnologias.md.
-
-# --- Node / JS / TS (npm, pnpm, yarn) ---
+# --- Node / TypeScript (pnpm) ---
 node_modules/
 .pnpm-store/
 dist/
@@ -13,46 +7,26 @@ build/
 *.log
 npm-debug.log*
 pnpm-debug.log*
-yarn-error.log*
 
 # --- Next.js ---
 .next/
 out/
 
-# --- Vite / CRA ---
-# dist/ ya cubierto arriba
-
-# --- Python ---
-__pycache__/
-*.pyc
-.venv/
-venv/
-*.egg-info/
-
-# --- Foundry / Solidity ---
-# [ADAPTAR] Si desplegás en una testnet real y querés dejar evidencia de
-# hashes de transacción (como pedía el AGENTS.md de Moor), NO ignores por
-# completo broadcast/ — solo la carpeta del chain id local (31337 = Anvil).
-cache/
-out/
-broadcast/*/31337/
-
-# --- Hardhat ---
-artifacts/
-cache_hardhat/
-
-# --- Env y secretos ---
+# --- Env and secrets ---
+# One .env at the repo root serves every app; .env.example is the committed template.
 .env
 .env.local
 .env*.local
 *.pem
 *.key
 
-# --- Despliegue ---
-.vercel
-.netlify
+# --- The JSON store shared by apps/web and apps/cron ---
+data/
 
-# --- Cobertura y reportes ---
+# --- Deployment ---
+.vercel
+
+# --- Coverage and reports ---
 coverage/
 .nyc_output/
 
@@ -64,9 +38,10 @@ Thumbs.db
 .idea/
 
 # --- Claude Code local settings ---
-# También excluido globalmente si configuraste ~/.config/git/ignore; se deja
-# aquí también para que el repo funcione igual en cualquier máquina.
+# Also excluded globally if you configured ~/.config/git/ignore; kept here so
+# the repo behaves the same on any machine.
 .claude/settings.local.json
 
-# --- Open Payments test wallet key ---
-apps/cron/private.key
+# --- Python helpers (brand/generate.py) ---
+__pycache__/
+*.pyc

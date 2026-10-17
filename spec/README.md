@@ -6,10 +6,16 @@
      final, cuando el 01 y el 02 ya existen — es un resumen de ellos, no al
      revés. -->
 
-_Una línea: qué es el proyecto y para quién._
+Merit es microcrédito de billetera a billetera: personas y entidades ponen
+cupos de liquidez, y Merit los presta a quien no tiene historial bancario,
+con desembolso y cobro automáticos sobre Interledger Open Payments.
 
-_Un párrafo: qué se hace hoy sin esto, por qué falla, y en qué lo convierte
-este proyecto._
+Hoy, quien necesita crédito y no tiene historial lo busca por fuera del
+sistema (1 de cada 5, en Colombia), y quien tiene dinero disponible no tiene
+cómo prestarlo midiendo el riesgo ni cobrando sin perseguir al deudor. Merit
+calcula un score con los movimientos de la billetera, presta de la billetera
+del prestamista a la del solicitante sin tocar el dinero, y cobra un
+porcentaje de cada ingreso hasta saldar la deuda.
 
 ---
 
@@ -32,6 +38,7 @@ Documentos, en orden. Cada uno asume el anterior.
 | [06](./definicion/06_tecnologias.md)         | **Tecnologías**           | Qué se instala, para qué sirve cada pieza y qué se descartó           |
 | [07](./definicion/07_plan-de-trabajo.md)     | **Plan de trabajo**       | Fases de construcción, cómo se verifica cada una y qué se recorta      |
 | [08](./definicion/08_roadmap.md)             | **Roadmap** _(opcional)_  | Lo que no entra en este hackathon y sí en el siguiente                |
+| [09](./definicion/09_marca-y-seo.md)         | **Marca, interfaz y SEO** | Colores, tipografía, voz, reglas de interfaz y cómo se encuentra la web |
 
 **Por dónde empezar según quién seas:** para entender el proyecto, el 01 y el
 02 bastan. Para trabajar en producto, el 04. Para escribir código, el 05 y el
