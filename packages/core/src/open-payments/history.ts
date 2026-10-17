@@ -52,6 +52,22 @@ async function listSince<T extends Listed>(
   return items;
 }
 
+/**
+ * The incoming payments of a wallet since a date, as the repayment cycle
+ * needs them (04 §4.4): every payment, completed or not, with what it has
+ * received so far.
+ */
+export async function listIncomingSince(
+  client: Pick<HistoryClient, "incomingPayment">,
+  wallet: Wallet,
+  accessToken: string,
+  { since }: { since: Date },
+) {
+  const args = { url: wallet.resourceServer, walletAddress: wallet.id, accessToken };
+  const incoming = await listSince(wallet.id, (pagination) => client.incomingPayment.list(args, pagination), since);
+  return incoming.map((p) => ({ id: p.id, createdAt: p.createdAt, receivedAmount: p.receivedAmount }));
+}
+
 export async function listHistory(
   client: HistoryClient,
   wallet: Wallet,

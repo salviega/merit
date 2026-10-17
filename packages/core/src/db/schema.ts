@@ -85,6 +85,9 @@ export const loan = z.object({
   disbursementIncomingPayment: url.optional(),
   disbursementOutgoingPayment: url.optional(),
   disbursedAt: isoDate.optional(),
+  /** What was reserved on the quota: the principal plus any quote fee. Released when paid or failed. */
+  reservedAmount: minorUnits.optional(),
+  paidAt: isoDate.optional(),
   status: loanStatus,
   createdAt: isoDate,
 });
@@ -107,9 +110,13 @@ export const repayment = z.object({
   loanId: z.string().min(1),
   sourceIncomingPayment: url,
   amount: minorUnits,
+  /** The incoming payment created on the lender's wallet for this installment. */
+  lenderIncomingPayment: url.optional(),
   outgoingPaymentId: url.optional(),
   status: repaymentStatus,
   createdAt: isoDate,
+  paidAt: isoDate.optional(),
+  attempts: z.number().int().min(0).optional(),
   error: z.string().optional(),
 });
 

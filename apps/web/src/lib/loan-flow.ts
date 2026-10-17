@@ -226,6 +226,7 @@ export async function disburse(id: string): Promise<void> {
       }
       if (!row) return;
       row.status = "active";
+      row.reservedAmount = (BigInt(loan.principal) + extraReserved).toString();
       row.disbursementIncomingPayment = incoming.id;
       row.disbursementOutgoingPayment = outgoing.id;
       row.disbursedAt = new Date().toISOString();

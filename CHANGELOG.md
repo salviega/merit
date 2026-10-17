@@ -28,6 +28,28 @@ Evidence conventions — what makes an entry verifiable instead of a claim:
 
 ### Added
 
+- Automatic repayment, flow 4.4. `packages/core/repayment.ts` is the pure
+  heart of 05 §5: `dueFromIncoming` charges the agreed share of what is new
+  in an incoming payment, never the disbursement, never anything before
+  `disbursed_at`, never more than the remaining balance; `planRepayment`
+  advances `processed_amount`, adds to `repaid_amount`, inserts the
+  `pending` installment and, at the balance, marks the loan `paid` and gives
+  the reservation back to the quota. Pinned by `repayment.test.ts`: the same
+  received amount twice yields one installment, a growing payment yields the
+  difference, the last installment is cut to the exact balance, and three
+  real processes applying the same payments through `withTransaction()`
+  produce the same installments as one.
+- `apps/cron` runs the cycle every `CRON_INTERVAL_MS` without overlapping:
+  retries unsettled installments as they are (never recalculated, up to five
+  attempts), lists the borrower's incoming payments since the disbursement
+  with the repayment grant's token (rotated and persisted when the provider
+  asks), records what each one owes inside a transaction and then moves the
+  money outside the lock: incoming payment on the lender, quote from the
+  borrower, outgoing payment with the borrower's token. The loan screen polls
+  `GET /api/loans` every five seconds so the repaid amount moves live.
+  Evidence on the test network pending the client credentials; see `07`
+  Fase 4.
+
 - Flow 4.1, the lender's quota: `POST /api/lenders` asks the lender's wallet
   for an outgoing-payment grant capped at the quota (`limits.debitAmount`),
   the callback verifies the provider's `hash` and activates it, and

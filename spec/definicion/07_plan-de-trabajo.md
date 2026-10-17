@@ -335,39 +335,44 @@ rechazado por el proveedor.
 sola vez, en la proporción acordada, sin pasarse del total, con el servicio
 corriendo cada 5 segundos (flujo 4.4). Es la fase que sostiene la regla 1.
 
-- **Tests antes del código, en `repayment.ts`**, función pura
-  `dueFromIncoming(payment, observed, loan)`: los seis del 05 §5, vistos
-  fallar:
-  - Mismo `receivedAmount` en dos ciclos → una sola cuota.
-  - Ingreso que crece en dos partes → dos cuotas por la diferencia.
-  - El pago entrante del desembolso → ninguna cuota.
-  - Pagos anteriores a `disbursed_at` → ninguna cuota.
-  - La cuota que superaría `total_due` se recorta al saldo exacto y el
-    préstamo pasa a `pagado`.
-  - Dos ciclos concurrentes sobre el mismo préstamo, desde dos procesos
-    reales → las mismas cuotas que uno solo (test sobre un archivo temporal
-    con `withTransaction()`).
-- Ciclo en `apps/cron`: cada `CRON_INTERVAL_MS` sin solapamiento; por cada
-  préstamo `activo`, lista los pagos entrantes del solicitante con el
-  token de `borrower_grants`, paginando solo hasta `disbursed_at`
-  (reutiliza `listHistory` con `since`), y por cada ingreso nuevo abre
-  **una transacción** (`withTransaction()`, bajo el lock del archivo): lee
-  `processed_amount`, calcula, adelanta `processed_amount`, inserta la
-  cuota `pendiente`; fuera de la transacción crea el pago entrante en la
-  billetera del prestamista, cotiza desde la del solicitante y crea el pago
-  saliente; marca `pagada` o `fallida`. Una cuota `fallida` se reintenta
-  tal cual, nunca se recalcula.
-- Al llegar `repaid_amount` a `total_due`: `pagado`, devuelve
-  `committed_amount` al cupo, y el próximo score de esa billetera suma 1 en
-  `pagados`.
-- La pantalla "Préstamo recibido" muestra `repaid_amount` en vivo.
+- ~~**Tests antes del código, en `repayment.ts`**, funciones puras
+  `dueFromIncoming(payment, loan, processed)` y `planRepayment(doc, loanId,
+  payment)`: los seis del 05 §5, vistos fallar (2026-10-17):~~
+  - ~~Mismo `receivedAmount` en dos ciclos → una sola cuota.~~
+  - ~~Ingreso que crece en dos partes → dos cuotas por la diferencia.~~
+  - ~~El pago entrante del desembolso → ninguna cuota.~~
+  - ~~Pagos anteriores a `disbursed_at` → ninguna cuota.~~
+  - ~~La cuota que superaría `total_due` se recorta al saldo exacto, el
+    préstamo pasa a `paid` y la reserva vuelve al cupo.~~
+  - ~~Tres procesos reales aplicando los mismos ingresos sobre un archivo
+    con `withTransaction()` → las mismas tres cuotas que uno solo.~~
+- ~~Ciclo en `apps/cron` (`repay.ts`): cada `CRON_INTERVAL_MS` sin
+  solapamiento; por cada préstamo `active`, primero reintenta tal cual las
+  cuotas que no se asentaron (hasta 5 intentos, nunca recalculadas), luego
+  lista los pagos entrantes del solicitante desde `disbursed_at` con el
+  token de `borrower_grants` (`listIncomingSince`, paginando solo hasta esa
+  fecha; el token se rota con `withFreshToken` y se guarda), y por cada
+  ingreso abre **una transacción** (`planRepayment`: lee `processed_amount`,
+  calcula, adelanta `processed_amount`, inserta la cuota `pending`); fuera
+  de la transacción crea el pago entrante en la billetera del prestamista,
+  cotiza desde la del solicitante y crea el pago saliente con el token del
+  solicitante; marca `paid` o `failed` con el error.~~
+- ~~Al llegar `repaid_amount` a `total_due`: `paid`, devuelve
+  `reserved_amount` al cupo, y el próximo score de esa billetera suma 1 en
+  `pagados` (ya contado en `computeScore`).~~
+- ~~La pantalla "Préstamo recibido" consulta `GET /api/loans` cada 5 s y
+  muestra `repaid_amount`, lo que falta y el porcentaje pagado.~~
 
-**Verificación:** `pnpm test` pasa con los seis tests y el umbral; con el
-servicio corriendo en una máquina propia, se envía un pago de prueba a la
-billetera B desde una tercera billetera y en menos de 15 s el prestamista A
-recibe el 20 %; se envía el mismo pago en partes y se cobran dos cuotas
-por la diferencia; al saldar, el préstamo queda `pagado` y el cupo vuelve.
-Reiniciar el servicio a mitad de camino no produce cuotas repetidas.
+**Verificación:** ~~`pnpm test` pasa con los seis tests y el umbral (75
+tests, 96 % líneas / 91 % ramas); `pnpm typecheck`, `pnpm lint` y `pnpm
+build` limpios; `apps/cron` arranca sobre el `.env` de la raíz, abre el
+almacén y se detiene limpio con `SIGTERM` (2026-10-17).~~ **Pendiente, necesita el
+`.env` y las billeteras de prueba:** con el servicio corriendo en una
+máquina propia, se envía un pago de prueba a la billetera B desde la
+billetera C y en menos de 15 s el prestamista A recibe el 20 %; se envía el
+mismo pago en partes y se cobran dos cuotas por la diferencia; al saldar, el
+préstamo queda `paid` y el cupo vuelve. Reiniciar el servicio a mitad de
+camino no produce cuotas repetidas.
 
 ---
 

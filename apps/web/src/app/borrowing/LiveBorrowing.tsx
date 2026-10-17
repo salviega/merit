@@ -99,14 +99,17 @@ export function LiveBorrowing() {
     scoreStatus === "analyzing" ||
     scoreStatus === "pending_grant" ||
     loan.status === "pending_grant" ||
-    loan.status === "disbursing";
+    loan.status === "disbursing" ||
+    loan.status === "active";
   useEffect(() => {
     // First load, then poll while something is happening at the provider or
-    // on the server (score computation, disbursement).
+    // on the server (score computation, disbursement), and slowly while a
+    // loan is active so `repaidAmount` moves as installments are collected.
     if (!polling) return;
-    const timer = setInterval(refresh, scoreStatus === undefined ? 400 : 2000);
+    const interval = scoreStatus === undefined ? 400 : loan.status === "active" ? 5000 : 2000;
+    const timer = setInterval(refresh, interval);
     return () => clearInterval(timer);
-  }, [polling, scoreStatus, refresh]);
+  }, [polling, scoreStatus, loan.status, refresh]);
 
   if (score === "loading") {
     return (
