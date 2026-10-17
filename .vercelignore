@@ -1,0 +1,11 @@
+# Never upload local environment files or the Open Payments key. Vercel's own
+# env settings are the source.
+**/.env
+**/.env.*
+!**/.env.example
+**/private.key
+
+# The web does not build from the cron app or the definition documents.
+apps/cron
+.claude
+spec

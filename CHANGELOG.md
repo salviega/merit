@@ -37,3 +37,7 @@ Versioning cadence, while pre-1.0:
 - `.githooks/commit-msg`: enforces the Conventional Commits rules from
   `AGENTS.md`. Written in POSIX sh so it runs without any language runtime;
   enable it per clone with `git config core.hooksPath .githooks`.
+- pnpm monorepo with two apps for trying out Interledger Open Payments:
+  `apps/web` (Next.js 16 playground UI) and `apps/cron` (Express 5 server
+  using `@interledger/open-payments` to create the incoming payment, quote,
+  and interactive outgoing-payment grant, then pay the quote).
